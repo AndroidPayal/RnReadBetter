@@ -38,7 +38,7 @@ function App(){
             <Stack.Screen
               name='Reader'
               component={ReaderScreen}
-              options={{ headerShown: false}}
+              // options={{ headerShown: false}}
             />
           </Stack.Navigator>
       }
