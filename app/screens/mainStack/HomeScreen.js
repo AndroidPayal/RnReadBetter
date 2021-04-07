@@ -6,7 +6,7 @@ import {
   SafeAreaView,
   TouchableWithoutFeedback,
 } from 'react-native';
-import {Button, Text} from 'react-native-elements';
+import {Button, Text, Overlay} from 'react-native-elements';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon1 from 'react-native-vector-icons/MaterialCommunityIcons';
 import Icon2 from 'react-native-vector-icons/Entypo';
@@ -23,6 +23,7 @@ import {
 } from '../../values/colors';
 import {getReadersUrl, getUserCredit} from '../../values/config';
 import {TouchableOpacity} from 'react-native';
+import AddReader from './AddReader'
 
 export default function HomeScreen({navigation}) {
   const {state, signout} = useContext(AuthContext);
@@ -41,6 +42,7 @@ export default function HomeScreen({navigation}) {
     {name: 'a', url: 'https://reactnative.dev/img/tiny_logo.png'},
     {name: 'a', url: 'https://reactnative.dev/img/tiny_logo.png'},
   ]);
+  const[openAddOverlay,setToggleOverlay] = useState(false)
 
   useEffect(() => {
     const creditUrl = getUserCredit + '/' + encodedUserId;
@@ -116,6 +118,14 @@ export default function HomeScreen({navigation}) {
       </View>
     </TouchableOpacity>
   ));
+  function handleAddReader(){
+     console.log('handle add reader function called');
+     setToggleOverlay(true)
+  }
+   function cancelAddReader(e){
+       console.log('close overlay');
+      setToggleOverlay(false)
+  }
   const headerRender = () => {
     return (
       <>
@@ -133,15 +143,18 @@ export default function HomeScreen({navigation}) {
               marginTop: 10,
             }}>
             <ScrollView horizontal={true}>{readersListView}</ScrollView>
+            <TouchableOpacity onPress={e=>handleAddReader()}>
             <View
               style={{
                 width: 80,
                 height: 100,
                 justifyContent: 'center',
                 alignItems: 'center',
-              }}>
+              }}
+              >
               <Icon2 name="plus" size={30} color={darkGray} />
             </View>
+            </TouchableOpacity>
           </View>
         </View>
         <Text h4 style={styles2.popularBookHeading}>
@@ -157,7 +170,7 @@ export default function HomeScreen({navigation}) {
       </TouchableWithoutFeedback>
     );
   };
-  return (
+  return (//isLoading ? <Activityindicator>
     <SafeAreaView style={styles.mainContainer}>
       {/* <View style={styles2.popularContainer}> */}
       <FlatList
@@ -177,10 +190,25 @@ export default function HomeScreen({navigation}) {
         ListHeaderComponent={headerRender}
         ListFooterComponent={footerRender}
       />
+        {/* <Overlay 
+        isVisible={true}//openAddOverlay} 
+        overlayStyle={{ width:'90%', height: '90%'}}
+        // fullScreen
+        onBackdropPress={e=>cancelAddReader(e)}
+        >
+            <View style={{width:'100%', height: '100%',alignItems:'center'}}>
+            <Text h4>Add New Reader</Text>
+            </View>
+        </Overlay> */}
+        <AddReader
+          openAddOverlay = {openAddOverlay}
+          cancelAddReader = {cancelAddReader}
+        />
       {/* </View> */}
     </SafeAreaView>
   );
 }
+
 const styles2 = StyleSheet.create({
   popularBookHeading: {
     margin: 10,
