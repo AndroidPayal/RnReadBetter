@@ -49,10 +49,9 @@ export default function HomeScreen({navigation}) {
     //API TO FETCH User Credit
     axios
       .get(creditUrl)
-      .then(response2 => {
-        setUserCredit(response2.data);
-      })
-      .then(() => {
+      .then((response2) => response2.data)
+      .then((result) => {
+        setUserCredit(result);
         navigation.setOptions({
           headerTitle: 'Home',
           headerStyle: {
@@ -73,7 +72,7 @@ export default function HomeScreen({navigation}) {
                   padding: 3,
                   borderRadius: 10,
                 }}>
-                <Text>{'' + userCredit.credits}</Text>
+                <Text>{'' + result.credits}</Text>
               </View>
             </View>
           ),
@@ -89,9 +88,10 @@ export default function HomeScreen({navigation}) {
     });
   }, []);
 
-  async function handleSignOut(e) {
-    e.preventDafault();
-    signout();
+  function handleSignOut() {
+    // e.preventDafault();
+    console.log('sign out');
+    // signout();
   }
   const handleReaderSelection = (e, reader) => {
     // e.preventDefault()
@@ -125,6 +125,11 @@ export default function HomeScreen({navigation}) {
    function cancelAddReader(e){
        console.log('close overlay');
       setToggleOverlay(false)
+  }
+  function addNewReader(obj) {
+    //CALL API OF ADD READER
+    console.log('calling add reader api ', obj .name);
+    cancelAddReader()
   }
   const headerRender = () => {
     return (
@@ -165,9 +170,9 @@ export default function HomeScreen({navigation}) {
   };
   const footerRender = () => {
     return (
-      <TouchableWithoutFeedback onPress={e => handleSignOut(e)}>
+      <TouchableOpacity onPress={e => handleSignOut()}>
         <Button title="SignOut" />
-      </TouchableWithoutFeedback>
+      </TouchableOpacity>
     );
   };
   return (//isLoading ? <Activityindicator>
@@ -203,6 +208,7 @@ export default function HomeScreen({navigation}) {
         <AddReader
           openAddOverlay = {openAddOverlay}
           cancelAddReader = {cancelAddReader}
+          addNewReader = {addNewReader}
         />
       {/* </View> */}
     </SafeAreaView>

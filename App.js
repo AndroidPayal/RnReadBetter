@@ -18,11 +18,11 @@ function App(){
     <NavigationContainer>
       {state.token=== null? 
           <Stack.Navigator>
-            {/* <Stack.Screen
+            <Stack.Screen
               name='Splash'
               component={SplashScreen}
               options={{title:'Welcome', headerShown: false}}
-            /> */}
+            />
             <Stack.Screen
               name='Login'
               component={LoginScreen}

@@ -70,7 +70,6 @@ export default function ReaderPage({route, navigation}) {
                 </FlatList>
             </View>
             
-            <Text>ad</Text>
         </SafeAreaView>
     )
 }
