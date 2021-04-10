@@ -19,11 +19,16 @@ import {
   lightGray,
   white,
   readerBackground,
-  black,
+  primary,
 } from '../../values/colors';
-import {getReadersUrl, getUserCredit} from '../../values/config';
+import {
+  getReadersUrl,
+  getUserCredit,
+  addNewReaderUrl,
+} from '../../values/config';
 import {TouchableOpacity} from 'react-native';
-import AddReader from './AddReader'
+import AddReader from './AddReader';
+import {ActivityIndicator} from 'react-native';
 
 export default function HomeScreen({navigation}) {
   const {state, signout} = useContext(AuthContext);
@@ -31,6 +36,7 @@ export default function HomeScreen({navigation}) {
   const encodedUserId = base64.encode(state.userId.toString()); //(state.userId ? state.userId.toString() : '29')
   const [readers, setReaders] = useState([]);
   const [userCredit, setUserCredit] = useState(0);
+  const [isLoading, setLoading] = useState(false);
   const [popularBooks, setPopularBooks] = useState([
     {name: 'a', url: 'https://reactnative.dev/img/tiny_logo.png'},
     {name: 'a', url: 'https://reactnative.dev/img/tiny_logo.png'},
@@ -42,15 +48,15 @@ export default function HomeScreen({navigation}) {
     {name: 'a', url: 'https://reactnative.dev/img/tiny_logo.png'},
     {name: 'a', url: 'https://reactnative.dev/img/tiny_logo.png'},
   ]);
-  const[openAddOverlay,setToggleOverlay] = useState(false)
+  const [openAddOverlay, setToggleOverlay] = useState(false);
 
   useEffect(() => {
     const creditUrl = getUserCredit + '/' + encodedUserId;
     //API TO FETCH User Credit
     axios
       .get(creditUrl)
-      .then((response2) => response2.data)
-      .then((result) => {
+      .then(response2 => response2.data)
+      .then(result => {
         setUserCredit(result);
         navigation.setOptions({
           headerTitle: 'Home',
@@ -78,13 +84,15 @@ export default function HomeScreen({navigation}) {
           ),
         });
       });
-  }, [navigation, userCredit]);
+  }, []); //navigation,credits => REMOVED THIS BCZ IT CAUSED INFINITE LOOP OF THIS FUNCTIONAL COMPONENT
 
   useEffect(() => {
+    setLoading(true);
     const readersUrl = getReadersUrl + '/' + encodedUserId;
     //API TO FETCH READERS
     axios.get(readersUrl).then(response => {
       setReaders(response.data);
+      setLoading(false);
     });
   }, []);
 
@@ -95,7 +103,7 @@ export default function HomeScreen({navigation}) {
   }
   const handleReaderSelection = (e, reader) => {
     // e.preventDefault()
-    console.log('clik');
+    console.log('clicked reader');
     navigation.navigate('Reader', reader);
   };
   const readersListView = readers.map((reader, i) => (
@@ -118,18 +126,40 @@ export default function HomeScreen({navigation}) {
       </View>
     </TouchableOpacity>
   ));
-  function handleAddReader(){
-     console.log('handle add reader function called');
-     setToggleOverlay(true)
+  function handleAddReader() {
+    console.log('handle add reader function called');
+    setToggleOverlay(true);
   }
-   function cancelAddReader(e){
-       console.log('close overlay');
-      setToggleOverlay(false)
+  function cancelAddReader(e) {
+    console.log('close overlay');
+    setToggleOverlay(false);
   }
   function addNewReader(obj) {
-    //CALL API OF ADD READER
-    console.log('calling add reader api ', obj .name);
-    cancelAddReader()
+    setLoading(true);
+    obj._token = state.token; //ADDING CSRF TOKEN TO URL
+    console.log('add reader url=', addNewReaderUrl, '\nobj = ', obj);
+
+    //API TO ADD NEW READER
+    const apicall = new Promise((resolve, reject) => {
+      axios
+        .post(addNewReaderUrl, obj)
+        .then(response => {
+          console.log('add reader response = ', response.data);
+          setLoading(false);
+
+          if(response.data.message ==='success'){
+          // readers.push(new obj)
+            return resolve('success')
+          }else{
+            return reject(response.data.message.toString())
+          }
+
+        })
+        .catch(error => {
+          return reject(error);
+        });
+    });
+    return apicall;
   }
   const headerRender = () => {
     return (
@@ -148,17 +178,16 @@ export default function HomeScreen({navigation}) {
               marginTop: 10,
             }}>
             <ScrollView horizontal={true}>{readersListView}</ScrollView>
-            <TouchableOpacity onPress={e=>handleAddReader()}>
-            <View
-              style={{
-                width: 80,
-                height: 100,
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}
-              >
-              <Icon2 name="plus" size={30} color={darkGray} />
-            </View>
+            <TouchableOpacity onPress={e => handleAddReader()}>
+              <View
+                style={{
+                  width: 80,
+                  height: 100,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}>
+                <Icon2 name="plus" size={30} color={darkGray} />
+              </View>
             </TouchableOpacity>
           </View>
         </View>
@@ -175,7 +204,16 @@ export default function HomeScreen({navigation}) {
       </TouchableOpacity>
     );
   };
-  return (//isLoading ? <Activityindicator>
+  return isLoading ? (
+    <ActivityIndicator
+      style={{
+        flex: 1,
+        justifyContent: 'center',
+      }}
+      size="large"
+      color={primary}
+    />
+  ) : (
     <SafeAreaView style={styles.mainContainer}>
       {/* <View style={styles2.popularContainer}> */}
       <FlatList
@@ -195,7 +233,7 @@ export default function HomeScreen({navigation}) {
         ListHeaderComponent={headerRender}
         ListFooterComponent={footerRender}
       />
-        {/* <Overlay 
+      {/* <Overlay 
         isVisible={true}//openAddOverlay} 
         overlayStyle={{ width:'90%', height: '90%'}}
         // fullScreen
@@ -205,11 +243,11 @@ export default function HomeScreen({navigation}) {
             <Text h4>Add New Reader</Text>
             </View>
         </Overlay> */}
-        <AddReader
-          openAddOverlay = {openAddOverlay}
-          cancelAddReader = {cancelAddReader}
-          addNewReader = {addNewReader}
-        />
+      <AddReader
+        openAddOverlay={openAddOverlay}
+        cancelAddReader={cancelAddReader}
+        addNewReader={addNewReader}
+      />
       {/* </View> */}
     </SafeAreaView>
   );

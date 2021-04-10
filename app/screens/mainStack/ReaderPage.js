@@ -1,30 +1,50 @@
 import React, {useEffect, useState} from 'react';
-import { SafeAreaView, StyleSheet } from 'react-native';
+import { SafeAreaView, StyleSheet ,Text} from 'react-native';
 import { FlatList , View, Image} from 'react-native';
-import {Text} from 'react-native-elements'
+import axios from 'axios';
+import base64 from 'react-native-base64';
+import { Avatar, Button, Card, Title, Paragraph } from 'react-native-paper';
+
 import { darkGray, lightGray, white } from '../../values/colors';
+import { getBooksOfAReader } from "../../values/config";
 
 export default function ReaderPage({route, navigation}) {
     const currentReader= route.params;
-    const [booksCurrentlyReading, setCurrentBooks] = useState([
-        {bookname:'a',url:'https://reactnative.dev/img/tiny_logo.png'},
-        {bookname:'b',url:'https://reactnative.dev/img/tiny_logo.png'},
-    ])
+    const encodedReaderId = base64.encode(currentReader.id.toString());
+    const [booksCurrentlyReading, setCurrentBooks] = useState([])
 
     useEffect(()=>{
         navigation.setOptions({
             headerTitle: currentReader?.first_name +' '+ currentReader?.last_name+ '\'s Track',
         })
-    },[navigation, currentReader])
+        const bookURL = getBooksOfAReader + '/' + encodedReaderId
+        //FETCH BOOKS FROM API
+        axios.get(bookURL)
+        .then(response => response.data)
+        .then(data=>{
+            console.log('books = ', data);
+            setCurrentBooks(data.StartedBooks)
+        });
+
+    },[])//navigation, currentReader
 
     const renderCurrentBooks = (item, index) => {
         return(
-            <View style={styles.bookContainer}>
-                 <Image
-                    source={{uri: item.url}}
-                    style={styles.imagePopularBook}></Image>
-                <Text style={styles.bookName}>{item.bookname}</Text>
-            </View>
+            // <View style={styles.bookContainer}>
+            //      <Image
+            //         source={{uri: item.thumbnail_image}}
+            //         style={styles.imagePopularBook}></Image>
+            //     <Text style={styles.bookName}>{item.name}</Text>
+            // </View>
+            <Card>
+                <Card.Title title="Card Title" subtitle="Card Subtitle"  />
+                <Card.Content>
+                <Title>Card title</Title>
+                <Paragraph>Card content</Paragraph>
+                </Card.Content>
+                <Card.Cover source={{ uri: 'https://picsum.photos/700' }} />
+
+            </Card>
             )
     }
 

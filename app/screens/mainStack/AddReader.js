@@ -1,13 +1,16 @@
 import React from 'react';
-import {Button, Text, Overlay, Input} from 'react-native-elements';
-import {View, StyleSheet} from 'react-native';
+import { Button, Text, Overlay, Input } from 'react-native-elements';
+import { View, StyleSheet } from 'react-native';
+import { Picker } from "@react-native-picker/picker";
 import Stepper from 'react-native-stepper-ui';
 import Icon from 'react-native-vector-icons/AntDesign';
 import Icon2 from 'react-native-vector-icons/Ionicons';
-import {RadioButton} from 'react-native-paper';
+import { RadioButton } from 'react-native-paper';
 import Datetimepicker from '@react-native-community/datetimepicker';
+import moment from "moment";
 
-import {darkGray, lightGray, primary, red, white} from '../../values/colors';
+import { darkGray, lightGray, primary, red, white } from '../../values/colors';
+import { ToastAndroid } from 'react-native';
 
 export default class AddReader extends React.Component {
   constructor(props) {
@@ -19,24 +22,30 @@ export default class AddReader extends React.Component {
       gender: 'male',
       dob: new Date(),
       showDatePicker: false, //PICKER FOR DOB
-      monthNames: [
-        'January',
-        'February',
-        'March',
-        'April',
-        'May',
-        'June',
-        'July',
-        'August',
-        'September',
-        'October',
-        'November',
-        'December',
-      ],
+      monthNames: ['January','February','March','April','May','June','July','August','September','October','November','December'],
       reminderTime: new Date(),
       showTimePicker: false, //PICKER FOR REMINDER TIME
+      grade: 0,
+      gradeArray: ['Kindergarten', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14'],
+      school: 1,
+      draLevel: 0,
+      draArray: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35', '36', '37', '38', '39', '40', '41', '42', '43', '44'],
+      graLevel: 0,
+      graArray: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'],
+      lexelLevel: 0,
+      lexelArray: [25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300, 325, 350, 375, 400, 425, 450, 475, 500, 525, 550, 575, 600, 625, 650, 675, 700, 725, 750, 775, 800, 825, 850, 875, 900, 925, 950, 975, 1000, 1025, 1050, 1075, 1100, 1125, 1150, 1175, 1200, 1225, 1250, 1275, 1300],
     };
   }
+  /*
+      gradeArray: ['Kindergarten', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14'],
+      school: 'dummy',
+      draLevel: 1,
+      draArray: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35', '36', '37', '38', '39', '40', '41', '42', '43', '44'],
+      graLevel: 1,
+      graArray: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'],
+      lexelLevel: 25,
+      lexelArray: [25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300, 325, 350, 375, 400, 425, 450, 475, 500, 525, 550, 575, 600, 625, 650, 675, 700, 725, 750, 775, 800, 825, 850, 875, 900, 925, 950, 975, 1000, 1025, 1050, 1075, 1100, 1125, 1150, 1175, 1200, 1225, 1250, 1275, 1300],
+*/
   setActivePage = value => {
     console.log('setting current stepper page = ', value);
     this.setState({
@@ -44,12 +53,51 @@ export default class AddReader extends React.Component {
     });
   };
   handleAddNewReader = e => {
+    const { firstName, lastName, gender, dob, reminderTime, grade, school, draLevel, graLevel, lexelLevel } = this.state;
+    const formated_dob = moment(dob).format('YYYY-MM-DD')
+    const formated_time = moment(reminderTime).format('HH-mm-ss')
+    const obj = {
+      firstname_reader: firstName,
+      lastname_reader: lastName,
+      gender: gender === 'male' ? 0 : 1,
+      dob_picker: formated_dob,
+      grade: grade,
+      time_picker: formated_time,
+      mynewschool: school,
+      dra: draLevel,
+      gra: graLevel,
+      lexel: lexelLevel
+    }
+    console.log(obj);
+    this.props.addNewReader(obj)
+      .then((response) => {
+        console.log('add reader promise res = ', response);
+        ToastAndroid.show('Reader Created', ToastAndroid.SHORT)
+        this.deleteStateValues()
+      })
+      .catch((error) => {
+        console.log('add reader error',error);
+        ToastAndroid.show(error, ToastAndroid.SHORT)
+      })
     this.props.cancelAddReader(e);
-    const {firstName, lastName} = this.state;
-    this.props.addNewReader({
-      name: firstName,
-    });
   };
+  deleteStateValues = () => {
+    this.setState({
+      activePage: 0,
+      firstName: '',
+      lastName: '',
+      gender: 'male',
+      dob: new Date(),
+      showDatePicker: false, //PICKER FOR DOB
+      reminderTime: new Date(),
+      showTimePicker: false, //PICKER FOR REMINDER TIME
+      grade: 0,
+      school: 'dummy',
+      draLevel: 1,
+      graLevel: 1,
+      lexelLevel: 25,
+    })
+  }
   updateStateValue = (fieldName, value) => {
     console.log('updating ', fieldName, ' val=', value);
     this.setState({
@@ -66,13 +114,13 @@ export default class AddReader extends React.Component {
   onReminderTimeChange = (event, time) => {
     console.log('updated time =', time ? time : this.state.reminderTime);
     this.setState({
-      reminderTime: time ? time : reminderTime,
+      reminderTime: time ? time : this.state.reminderTime,
       showTimePicker: false,
     });
   };
   render() {
-    const {openAddOverlay, cancelAddReader, addNewReader} = this.props;
-    const {activePage} = this.state;
+    const { openAddOverlay, cancelAddReader, addNewReader } = this.props;
+    const { activePage } = this.state;
     const styles = StyleSheet.create({
       overlayStyle: {
         width: '90%',
@@ -110,12 +158,16 @@ export default class AddReader extends React.Component {
         states={this.state}
         onChange={this.onReminderTimeChange}
       />,
-      <MyComponent title="Component 3" />,
+      <StepperPage3
+        updateStateValue={this.updateStateValue}
+        states={this.state}
+        setPickerItem={this.setPickerItem}
+      />,
     ];
 
     return (
       <Overlay
-        isVisible={true} //{openAddOverlay}//
+        isVisible={openAddOverlay}//{true} //
         overlayStyle={styles.overlayStyle}
         // fullScreen
         onBackdropPress={e => cancelAddReader(e)}>
@@ -141,8 +193,8 @@ export default class AddReader extends React.Component {
                 width: 100,
                 alignItems: 'center',
               }}
-              wrapperStyle={{width: '100%', height: '95%'}} //STYLE FROM CENTER CONTENT OF PAGE
-              stepTextStyle={{color: white}}
+              wrapperStyle={{ width: '100%', height: '95%' }} //STYLE FROM CENTER CONTENT OF PAGE
+              stepTextStyle={{ color: white }}
             />
           </View>
         </View>
@@ -153,12 +205,12 @@ export default class AddReader extends React.Component {
 
 const StepperPage1 = props => {
   return (
-    <View style={{marginTop: 40}}>
+    <View style={{ marginTop: 40 }}>
       <Input
         label={
-          <View style={{flexDirection: 'row'}}>
+          <View style={{ flexDirection: 'row' }}>
             <Text>First Name</Text>
-            <Text style={{color: red}}>{' *'}</Text>
+            <Text style={{ color: red }}>{' *'}</Text>
           </View>
         }
         leftIcon={<Icon2 size={17} name="person" />}
@@ -168,9 +220,9 @@ const StepperPage1 = props => {
 
       <Input
         label={
-          <View style={{flexDirection: 'row'}}>
+          <View style={{ flexDirection: 'row' }}>
             <Text>Last Name</Text>
-            <Text style={{color: red}}>{' *'}</Text>
+            <Text style={{ color: red }}>{' *'}</Text>
           </View>
         }
         leftIcon={<Icon2 size={17} name="person" />}
@@ -180,7 +232,7 @@ const StepperPage1 = props => {
 
       <View style={stylesSteppers.headingContainer}>
         <Text>Gender</Text>
-        <Text style={{color: red}}>{' *'}</Text>
+        <Text style={{ color: red }}>{' *'}</Text>
       </View>
       <RadioButton.Group
         onValueChange={newValue => props.updateStateValue('gender', newValue)}
@@ -199,14 +251,15 @@ const StepperPage1 = props => {
 
       <View style={stylesSteppers.headingContainer}>
         <Text>DOB</Text>
-        <Text style={{color: red}}>{' *'}</Text>
+        <Text style={{ color: red }}>{' *'}</Text>
       </View>
       {!props.states.showDatePicker ? (
         <View style={stylesSteppers.dateTimeContainer}>
           <Icon2
             style={stylesSteppers.dateTimeIcon}
             name="ios-calendar-outline"
-            size={30}/>
+            size={30}
+          />
           <Text
             style={stylesSteppers.dateTimeText}
             onPress={e => props.updateStateValue('showDatePicker', true)}>
@@ -231,11 +284,30 @@ const StepperPage1 = props => {
   );
 };
 const StepperPage2 = props => {
+  let gradeItems = props.states.gradeArray.map((s, i) => {
+    return <Picker.Item key={i} value={i} label={s} />;
+  });
   return (
     <View style={stylesSteppers.parentContainer}>
       <View style={stylesSteppers.headingContainer}>
+        <Text>Grade</Text>
+        <Text style={{ color: red }}>{' *'}</Text>
+      </View>
+      <View style={stylesSteppers.dateTimeContainer}>
+        <Picker
+          selectedValue={props.states.grade}
+          style={{ height: '100%', width: '100%' }}
+          mode="dropdown"
+          onValueChange={(itemValue, itemIndex) =>
+            props.updateStateValue('grade', itemValue)
+          }>
+          {gradeItems}
+        </Picker>
+      </View>
+
+      <View style={stylesSteppers.headingContainer}>
         <Text>Reminder Time</Text>
-        <Text style={{color: red}}>{' *'}</Text>
+        <Text style={{ color: red }}>{' *'}</Text>
       </View>
       {!props.states.showTimePicker ? (
         <View>
@@ -259,17 +331,75 @@ const StepperPage2 = props => {
           display="default"
           mode="time"
           onChange={props.onChange}
-          is24Hour={true}
-          // dateFormat="day month year"//FORMAT ADJUST FROM MOMENT.JS
+          is24Hour={false} //SETTING THIS TRUE REMOVED AM/PM OPTION FROM PICKER
+
+        // dateFormat="day month year"//FORMAT ADJUST FROM MOMENT.JS
         />
       )}
     </View>
   );
 };
-const MyComponent = props => {
+const StepperPage3 = props => {
+  // let draArray = new Array[5]
+  let draLevelItems = props.states.draArray.map((s, i) => {
+    return <Picker.Item key={i} value={i + 1} label={s} />; //EITHER PROVIDE STRING ARRAY OR SET LABEL AS TOSTRING()
+  });
+  let graLevelItems = props.states.graArray.map((s, i) => {
+    return <Picker.Item key={i} value={i + 1} label={s} />; //EITHER PROVIDE STRING ARRAY OR SET LABEL AS TOSTRING()
+  });
+  let lexelLevelItems = props.states.lexelArray.map((s, i) => {
+    return <Picker.Item key={i} value={s} label={s.toString()} />; //EITHER PROVIDE STRING ARRAY OR SET LABEL AS TOSTRING()
+  });
+
   return (
-    <View>
-      <Text>{props.title}</Text>
+    <View style={stylesSteppers.parentContainer}>
+      <View style={stylesSteppers.headingContainer}>
+        <Text>DRA Level (Optional)</Text>
+        {/* <Text style={{color: red}}>{' *'}</Text> */}
+      </View>
+      <View style={stylesSteppers.dateTimeContainer}>
+        <Picker
+          selectedValue={props.states.draLevel}
+          style={{ height: '100%', width: '100%' }}
+          mode="dropdown"
+          onValueChange={(itemValue, itemIndex) =>
+            props.updateStateValue('draLevel', itemValue)
+          }>
+          {draLevelItems}
+        </Picker>
+      </View>
+
+      <View style={stylesSteppers.headingContainer}>
+        <Text>GRA Level (Optional)</Text>
+        {/* <Text style={{color: red}}>{' *'}</Text> */}
+      </View>
+      <View style={stylesSteppers.dateTimeContainer}>
+        <Picker
+          selectedValue={props.states.graLevel}
+          style={{ height: '100%', width: '100%' }}
+          mode="dropdown"
+          onValueChange={(itemValue, itemIndex) =>
+            props.updateStateValue('graLevel', itemValue)
+          }>
+          {graLevelItems}
+        </Picker>
+      </View>
+
+      <View style={stylesSteppers.headingContainer}>
+        <Text>Lexel Level (Optional)</Text>
+        {/* <Text style={{color: red}}>{' *'}</Text> */}
+      </View>
+      <View style={stylesSteppers.dateTimeContainer}>
+        <Picker
+          selectedValue={props.states.lexelLevel}
+          style={{ height: '100%', width: '100%' }}
+          mode="dropdown"
+          onValueChange={(itemValue, itemIndex) =>
+            props.updateStateValue('lexelLevel', itemValue)
+          }>
+          {lexelLevelItems}
+        </Picker>
+      </View>
     </View>
   );
 };
@@ -279,7 +409,7 @@ const stylesSteppers = StyleSheet.create({
     alignItems: 'center',
     marginHorizontal: 10,
   },
-  radioGrupParent: {flexDirection: 'row', flex: 1},
+  radioGrupParent: { flexDirection: 'row', flex: 1 },
   dateTimeContainer: {
     width: '100%',
     height: 60,
@@ -291,8 +421,8 @@ const stylesSteppers = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  dateTimeIcon: {margin: 5},
-  dateTimeText: {flex: 1, textAlign: 'center'},
-  parentContainer: {marginTop: 40},
-  headingContainer: {flexDirection: 'row', marginStart: 10, marginTop: 10},
+  dateTimeIcon: { margin: 5 },
+  dateTimeText: { flex: 1, textAlign: 'center' },
+  parentContainer: { marginTop: 40 },
+  headingContainer: { flexDirection: 'row', marginStart: 10, marginTop: 15 },
 });

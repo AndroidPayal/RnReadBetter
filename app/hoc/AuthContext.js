@@ -3,18 +3,18 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useEffect} from 'react';
 import axios from 'axios';
 import {sha1} from 'react-native-sha1';
-import { authBaseUrl, loginUrl } from "../values/config";
+import {authBaseUrl, loginUrl} from '../values/config';
 
 const authReducer = (state, action) => {
   switch (action.type) {
     case 'signout':
-      return {token: null, email: '',userId:''};
+      return {token: null, email: '', userId: ''};
 
     case 'signin':
       return {
         token: action.payload.token,
         email: action.payload.email,
-        userId:action.payload.userId
+        userId: action.payload.userId,
       }; //due to return no need of break;
     default:
       return state;
@@ -23,21 +23,26 @@ const authReducer = (state, action) => {
 
 const signin = dispatch => {
   return async ({email, password}) => {
-    const timestamp = +new Date();
-    console.log('timestamp = ',timestamp);
+    const timestamp = +new Date(); //'1617995738'//
+    console.log('timestamp = ', timestamp);
     //GET SHA1 HASH OF TIMESTAMP
-    sha1(timestamp.toString()).then(hash => {
-      hash = hash.toLowerCase(); // TO LOWER CASE BCZ URL NOT ACCEPTING UPPER CASE HASH
-      console.log('hash of timestamp = ',hash);
+    let hash = '';
+    await sha1(timestamp.toString()).then(hash2 => {
+      hash = hash2.toLowerCase(); // TO LOWER CASE BCZ URL NOT ACCEPTING UPPER CASE HASH
+      console.log('hash of timestamp = ', hash);
+    });
 
-      const authUrl =
-        authBaseUrl+ '/' + timestamp.toString() + '/' + hash.toString();
+    const authUrl =
+      authBaseUrl + '/' + timestamp.toString() + '/' + hash.toString();
+
+    const apicall = await new Promise((resolve, reject) => {
+      console.log('promise called with url=', authUrl);
       axios
         .get(authUrl)
         .then(response => {
           //RESPONSE IS AUTH TOKEN AND WE SEND THIS WITH LOGIN URL
-          // console.log('current auth token = ', response.data);
           const currentAuthToken = response.data.csrf_token;
+          console.log('got csrf token =', currentAuthToken);
 
           // API CALL TO CHECK USER WITH ENTERED EMAIL ID / PHONE
           axios
@@ -47,7 +52,6 @@ const signin = dispatch => {
               _token: currentAuthToken,
             })
             .then(async res => {
-              // console.log('login response = ', res.data);
               if (res.data?.isUserVerified && res.data?.isUserAuthenticated) {
                 //SENDING IN TO THIS USER AND SETTING LOCAL STORAGE FOR SESSION
                 await AsyncStorage.setItem(
@@ -55,7 +59,7 @@ const signin = dispatch => {
                   JSON.stringify({
                     token: currentAuthToken,
                     email: email,
-                    userId: res.data.User.id
+                    userId: res.data.User.id,
                   }),
                 );
                 dispatch({
@@ -63,15 +67,21 @@ const signin = dispatch => {
                   payload: {
                     token: currentAuthToken,
                     email,
-                    userId:res.data.User.id
+                    userId: res.data.User.id,
                   },
                 });
-              }
+                return resolve('success');
+              }else return reject('Wrong Id Password')
             })
-            .catch(error => console.log(error));
+            .catch(error => {
+              return reject(error);
+            });
         })
-        .catch(error => console.log(error));
+        .catch(error => {
+          return reject(error);
+        });
     });
+    return apicall;
   };
 };
 
@@ -92,7 +102,11 @@ export const {Provider, Context} = //async()=>{
   //   email = data.email
   // }
   // console.log('data = ', data);
-  // return await new 
-  // createDataContext(authReducer, {signin, signout}, {token : null, email: '',userId:null})//data);
-  createDataContext(authReducer, {signin, signout}, {token : 1, email: 'sf',userId:'29'})//data);
+  // return await new
+  createDataContext(
+    authReducer,
+    {signin, signout},
+    {token: null, email: '', userId: null},
+  ); //data);
+// createDataContext(authReducer, {signin, signout}, {token : 1, email: 'sf',userId:'29'})//data);
 // }
