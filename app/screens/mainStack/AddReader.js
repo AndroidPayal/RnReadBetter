@@ -34,6 +34,7 @@ export default class AddReader extends React.Component {
       graArray: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'],
       lexelLevel: 0,
       lexelArray: [25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300, 325, 350, 375, 400, 425, 450, 475, 500, 525, 550, 575, 600, 625, 650, 675, 700, 725, 750, 775, 800, 825, 850, 875, 900, 925, 950, 975, 1000, 1025, 1050, 1075, 1100, 1125, 1150, 1175, 1200, 1225, 1250, 1275, 1300],
+      errorField:''
     };
   }
   /*
@@ -69,7 +70,18 @@ export default class AddReader extends React.Component {
       lexel: lexelLevel
     }
     console.log(obj);
-    this.props.addNewReader(obj)
+    if(firstName === ''){
+      this.setState({
+        errorField: 'firstName',
+        activePage:0
+      })
+    }else if(lastName === ''){
+      this.setState({
+        errorField: 'lastName',
+        activePage:0
+      })
+    }else{
+      this.props.addNewReader(obj)
       .then((response) => {
         console.log('add reader promise res = ', response);
         ToastAndroid.show('Reader Created', ToastAndroid.SHORT)
@@ -79,7 +91,9 @@ export default class AddReader extends React.Component {
         console.log('add reader error',error);
         ToastAndroid.show(error, ToastAndroid.SHORT)
       })
-    this.props.cancelAddReader(e);
+      this.props.cancelAddReader(e);
+    }
+
   };
   deleteStateValues = () => {
     this.setState({
@@ -216,6 +230,7 @@ const StepperPage1 = props => {
         leftIcon={<Icon2 size={17} name="person" />}
         onChangeText={value => props.updateStateValue('firstName', value)}
         value={props.states.firstName}
+        errorMessage={props.states.errorField==='firstName' ? 'First Name Required !' : ''}
       />
 
       <Input
@@ -228,6 +243,7 @@ const StepperPage1 = props => {
         leftIcon={<Icon2 size={17} name="person" />}
         onChangeText={value => props.updateStateValue('lastName', value)}
         value={props.states.lastName}
+        errorMessage={props.states.errorField==='lastName' ? 'Last Name Required !' : ''}
       />
 
       <View style={stylesSteppers.headingContainer}>

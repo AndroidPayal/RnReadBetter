@@ -3,17 +3,21 @@ import { SafeAreaView, StyleSheet ,Text} from 'react-native';
 import { FlatList , View, Image} from 'react-native';
 import axios from 'axios';
 import base64 from 'react-native-base64';
-import { Avatar, Button, Card, Title, Paragraph } from 'react-native-paper';
+import {Card} from 'react-native-elements'
 
-import { darkGray, lightGray, white } from '../../values/colors';
+import { black, primary, white } from '../../values/colors';
 import { getBooksOfAReader } from "../../values/config";
+import { ActivityIndicator } from 'react-native';
 
 export default function ReaderPage({route, navigation}) {
     const currentReader= route.params;
     const encodedReaderId = base64.encode(currentReader.id.toString());
     const [booksCurrentlyReading, setCurrentBooks] = useState([])
+    const [booksStoppedReading, setStoppedBooks] = useState([])
+    const [isLoading, setLoading] = useState(false)
 
     useEffect(()=>{
+        setLoading(true)
         navigation.setOptions({
             headerTitle: currentReader?.first_name +' '+ currentReader?.last_name+ '\'s Track',
         })
@@ -24,31 +28,33 @@ export default function ReaderPage({route, navigation}) {
         .then(data=>{
             console.log('books = ', data);
             setCurrentBooks(data.StartedBooks)
+            setStoppedBooks(data.FinishedAndStopedBooks)
+            setLoading(false)
         });
 
     },[])//navigation, currentReader
 
     const renderCurrentBooks = (item, index) => {
         return(
-            // <View style={styles.bookContainer}>
-            //      <Image
-            //         source={{uri: item.thumbnail_image}}
-            //         style={styles.imagePopularBook}></Image>
-            //     <Text style={styles.bookName}>{item.name}</Text>
-            // </View>
-            <Card>
-                <Card.Title title="Card Title" subtitle="Card Subtitle"  />
-                <Card.Content>
-                <Title>Card title</Title>
-                <Paragraph>Card content</Paragraph>
-                </Card.Content>
-                <Card.Cover source={{ uri: 'https://picsum.photos/700' }} />
-
+            <Card containerStyle={styles.bookContainer}>
+                <Card.Image style={styles.cardImage} 
+                source={{uri:item.thumbnail_image}}//'https://picsum.photos/700'}}//
+                resizeMode='stretch'
+                ></Card.Image>
+                <Card.FeaturedSubtitle style={styles.cardText}>{item.name}</Card.FeaturedSubtitle>
             </Card>
             )
     }
 
-    return(
+    return isLoading ? (
+        <ActivityIndicator 
+            style={{
+            flex: 1,
+            justifyContent: 'center',
+          }}
+          size="large"
+          color={primary}/>
+    ):(
         <SafeAreaView style={styles.parentContainer}>
             {/* CURRENTLY READING BOOKS */}
             <Text style={styles.heading}>{'Currently Reading ...'}</Text>
@@ -82,7 +88,7 @@ export default function ReaderPage({route, navigation}) {
                 <FlatList
                     horizontal
                     showsHorizontalScrollIndicator={false}
-                    data={booksCurrentlyReading}
+                    data={booksStoppedReading}
                     renderItem={({item, index}) => renderCurrentBooks(item, index)}
                     keyExtractor={(item, index) => index}
                     key={item => item}
@@ -102,25 +108,14 @@ const styles = StyleSheet.create({
         height:'auto',
     width: '100%'
     },
-    imagePopularBook:{
-        width:'100%', 
-        height:100, 
-        resizeMode: 'cover'
-    },
-    bookName:{
-        fontWeight:'bold', 
-        fontSize: 16
-    },
     parentContainer:{
         backgroundColor:white, 
         flex:1,
         padding:10
     },
-    bookContainer:{
-        width:90, 
-        margin:5, 
-        alignItems: 'center'
-    }
+    bookContainer:{elevation:4,padding:0, borderRadius:7, width:150},
+    cardImage:{borderTopLeftRadius:5,borderTopRightRadius:5},
+    cardText:{color:black, minHeight:40, alignSelf:'center',textAlignVertical:'center'}
 })
 /*
 {"avatar": null, "created_at": "2021-04-05T12:14:00.000000Z", "dob": "2017-02-23", "dra": "0"

@@ -12,6 +12,7 @@ import Icon1 from 'react-native-vector-icons/MaterialCommunityIcons';
 import Icon2 from 'react-native-vector-icons/Entypo';
 import axios from 'axios';
 import base64 from 'react-native-base64';
+import {Card} from 'react-native-elements'
 
 import {Context as AuthContext} from '../../hoc/AuthContext';
 import {
@@ -20,6 +21,7 @@ import {
   white,
   readerBackground,
   primary,
+  black,
 } from '../../values/colors';
 import {
   getReadersUrl,
@@ -35,18 +37,19 @@ export default function HomeScreen({navigation}) {
 
   const encodedUserId = base64.encode(state.userId.toString()); //(state.userId ? state.userId.toString() : '29')
   const [readers, setReaders] = useState([]);
+  const [flagNewReader, setFlagNewReader] = useState(false);
   const [userCredit, setUserCredit] = useState(0);
   const [isLoading, setLoading] = useState(false);
   const [popularBooks, setPopularBooks] = useState([
-    {name: 'a', url: 'https://reactnative.dev/img/tiny_logo.png'},
-    {name: 'a', url: 'https://reactnative.dev/img/tiny_logo.png'},
-    {name: 'a', url: 'https://reactnative.dev/img/tiny_logo.png'},
-    {name: 'a', url: 'https://reactnative.dev/img/tiny_logo.png'},
-    {name: 'a', url: 'https://reactnative.dev/img/tiny_logo.png'},
-    {name: 'a', url: 'https://reactnative.dev/img/tiny_logo.png'},
-    {name: 'a', url: 'https://reactnative.dev/img/tiny_logo.png'},
-    {name: 'a', url: 'https://reactnative.dev/img/tiny_logo.png'},
-    {name: 'a', url: 'https://reactnative.dev/img/tiny_logo.png'},
+    {name: 'a', url: 'https://picsum.photos/600'},
+    {name: 'a', url: 'https://picsum.photos/700'},
+    {name: 'a', url: 'https://picsum.photos/500'},
+    {name: 'a', url: 'https://picsum.photos/600'},
+    {name: 'a', url: 'https://picsum.photos/700'},
+    {name: 'a', url: 'https://picsum.photos/500'},
+    {name: 'a', url: 'https://picsum.photos/600'},
+    {name: 'a', url: 'https://picsum.photos/700'},
+    {name: 'a', url: 'https://picsum.photos/500'},
   ]);
   const [openAddOverlay, setToggleOverlay] = useState(false);
 
@@ -87,6 +90,7 @@ export default function HomeScreen({navigation}) {
   }, []); //navigation,credits => REMOVED THIS BCZ IT CAUSED INFINITE LOOP OF THIS FUNCTIONAL COMPONENT
 
   useEffect(() => {
+    console.log('called fetch reader useeffect');
     setLoading(true);
     const readersUrl = getReadersUrl + '/' + encodedUserId;
     //API TO FETCH READERS
@@ -94,12 +98,12 @@ export default function HomeScreen({navigation}) {
       setReaders(response.data);
       setLoading(false);
     });
-  }, []);
+  }, [flagNewReader]);
 
   function handleSignOut() {
     // e.preventDafault();
     console.log('sign out');
-    // signout();
+    signout();
   }
   const handleReaderSelection = (e, reader) => {
     // e.preventDefault()
@@ -143,17 +147,12 @@ export default function HomeScreen({navigation}) {
     const apicall = new Promise((resolve, reject) => {
       axios
         .post(addNewReaderUrl, obj)
-        .then(response => {
-          console.log('add reader response = ', response.data);
+        .then(response=>response.data)
+        .then(data => {
+          console.log('add reader response = ', data);
           setLoading(false);
-
-          if(response.data.message ==='success'){
-          // readers.push(new obj)
-            return resolve('success')
-          }else{
-            return reject(response.data.message.toString())
-          }
-
+          setFlagNewReader(flagNewReader===true ? false : true)
+          return resolve(data.message.toString())
         })
         .catch(error => {
           return reject(error);
@@ -199,9 +198,11 @@ export default function HomeScreen({navigation}) {
   };
   const footerRender = () => {
     return (
+      <View style={styles.welcomeContainer}>
       <TouchableOpacity onPress={e => handleSignOut()}>
         <Button title="SignOut" />
       </TouchableOpacity>
+      </View>
     );
   };
   return isLoading ? (
@@ -219,30 +220,21 @@ export default function HomeScreen({navigation}) {
       <FlatList
         data={popularBooks}
         renderItem={({item}) => (
-          <View style={styles2.popularGridItem}>
-            <Image
-              source={{uri: item.url}}
-              style={styles2.imagePopularBook}></Image>
-            <Text>{item.name}</Text>
-          </View>
+          <Card containerStyle={styles2.popularGridItem}>
+              <Card.Image style={styles2.imagePopularBook} 
+              source={{uri:item.url}}
+              resizeMode='stretch'
+              ></Card.Image>
+              <Card.FeaturedSubtitle style={styles2.cardText}>{item.name}</Card.FeaturedSubtitle>
+          </Card>
         )}
         //Setting the number of column
         numColumns={3}
         key={item => item}
         keyExtractor={(item, index) => index}
         ListHeaderComponent={headerRender}
-        ListFooterComponent={footerRender}
+        // ListFooterComponent={footerRender}
       />
-      {/* <Overlay 
-        isVisible={true}//openAddOverlay} 
-        overlayStyle={{ width:'90%', height: '90%'}}
-        // fullScreen
-        onBackdropPress={e=>cancelAddReader(e)}
-        >
-            <View style={{width:'100%', height: '100%',alignItems:'center'}}>
-            <Text h4>Add New Reader</Text>
-            </View>
-        </Overlay> */}
       <AddReader
         openAddOverlay={openAddOverlay}
         cancelAddReader={cancelAddReader}
@@ -257,21 +249,11 @@ const styles2 = StyleSheet.create({
   popularBookHeading: {
     margin: 10,
   },
-  imagePopularBook: {
-    width: '100%',
-    height: 100,
-    resizeMode: 'cover',
+  imagePopularBook: {borderTopLeftRadius:5,borderTopRightRadius:5, height:100},
+  popularGridItem: {elevation:1,padding:0, borderRadius:7, width:100
   },
-  popularGridItem: {
-    flex: 1,
-    flexDirection: 'column',
-    margin: 5,
-    // height:100,
-    // width:80,
-    // backgroundColor:lightGray,
-    alignItems: 'center',
-    borderRadius: 8,
-  },
+  cardText:{color:black, minHeight:20, alignSelf:'center',textAlignVertical:'center'},
+
   popularContainer: {
     margin: 10,
   },
@@ -290,6 +272,7 @@ const styles = StyleSheet.create({
   mainContainer: {
     backgroundColor: white,
     flex: 1,
+    paddingBottom:5
   },
   welcomeContainer: {
     margin: 10,
