@@ -44,11 +44,11 @@ export default function HomeScreen({navigation}) {
     {name: 'a', url: 'https://picsum.photos/600'},
     {name: 'a', url: 'https://picsum.photos/700'},
     {name: 'a', url: 'https://picsum.photos/500'},
-    {name: 'a', url: 'https://picsum.photos/600'},
-    {name: 'a', url: 'https://picsum.photos/700'},
-    {name: 'a', url: 'https://picsum.photos/500'},
-    {name: 'a', url: 'https://picsum.photos/600'},
-    {name: 'a', url: 'https://picsum.photos/700'},
+    {name: 'a', url: 'https://picsum.photos/400'},
+    {name: 'a', url: 'https://picsum.photos/100'},
+    {name: 'a', url: 'https://picsum.photos/300'},
+    {name: 'a', url: 'https://picsum.photos/200'},
+    {name: 'a', url: 'https://picsum.photos/100'},
     {name: 'a', url: 'https://picsum.photos/500'},
   ]);
   const [openAddOverlay, setToggleOverlay] = useState(false);
@@ -165,7 +165,7 @@ export default function HomeScreen({navigation}) {
       <>
         <View style={styles.welcomeContainer}>
           <Text style={styles.textHello}>Hello ,</Text>
-          <Text h3>current User name</Text>
+          <Text h3>{state.name}</Text>
         </View>
         <View style={styles.welcomeContainer}>
           <Text style={styles.grayHeading}>Here are your readers...</Text>
@@ -278,8 +278,9 @@ const styles = StyleSheet.create({
     margin: 10,
   },
   textHello: {
-    fontSize: 18,
+    fontSize: 15,
     color: darkGray,
+    marginBottom:-5
   },
   grayHeading: {
     color: darkGray,

@@ -8,13 +8,14 @@ import {authBaseUrl, loginUrl} from '../values/config';
 const authReducer = (state, action) => {
   switch (action.type) {
     case 'signout':
-      return {token: null, email: '', userId: ''};
+      return {token: null, email: '', userId: '', name: ''};
 
     case 'signin':
       return {
         token: action.payload.token,
         email: action.payload.email,
         userId: action.payload.userId,
+        name: action.payload.name
       }; //due to return no need of break;
     default:
       return state;
@@ -60,6 +61,7 @@ const signin = dispatch => {
                     token: currentAuthToken,
                     email: email,
                     userId: res.data.User.id,
+                    name: res.data.User.Name
                   }),
                 );
                 dispatch({
@@ -68,6 +70,7 @@ const signin = dispatch => {
                     token: currentAuthToken,
                     email,
                     userId: res.data.User.id,
+                    name: res.data.User.name
                   },
                 });
                 return resolve('success');
@@ -106,7 +109,33 @@ export const {Provider, Context} = //async()=>{
   createDataContext(
     authReducer,
     {signin, signout},
-    {token: null, email: '', userId: null},
+    {token: null, email: '', userId: null, name:''},
   ); //data);
-// createDataContext(authReducer, {signin, signout}, {token : 1, email: 'sf',userId:'29'})//data);
+// createDataContext(authReducer, {signin, signout}, {token : 1, email: 'sf',userId:'29',name:'test'})//data);
 // }
+
+/* ********** lOGIN RESPONSE JSON ************
+{
+    "isUserAuthenticated": true,
+    "isUserVerified": true,
+    "User": {
+        "id": 29,
+        "name": "Payal",
+        "access": "8962607775",
+        "access_type": "1",
+        "access_verified_at": "2021-03-22 16:48:03",
+        "country": "0",
+        "alt_email": "",
+        "verify_alt_email": null,
+        "verify_alt_mobile": null,
+        "verification_code": "9f5c8fab9e2839ea68b77fe30733f5fd669266b9",
+        "alt_mobile": "",
+        "refferal_link": "Payal1885380904",
+        "refferal_from": null,
+        "profile_picture": "https://thereadbettercompany.com/public/cdn/assets/media/avatars/avatar16.jpg",
+        "status": "1",
+        "created_at": "2021-03-22T11:15:20.000000Z",
+        "updated_at": "2021-03-22T11:18:03.000000Z"
+    }
+}
+*/

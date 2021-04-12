@@ -8,6 +8,7 @@ import {Card} from 'react-native-elements'
 import { black, primary, white } from '../../values/colors';
 import { getBooksOfAReader } from "../../values/config";
 import { ActivityIndicator } from 'react-native';
+import { ScrollView } from 'react-native';
 
 export default function ReaderPage({route, navigation}) {
     const currentReader= route.params;
@@ -55,6 +56,7 @@ export default function ReaderPage({route, navigation}) {
           size="large"
           color={primary}/>
     ):(
+        <ScrollView>
         <SafeAreaView style={styles.parentContainer}>
             {/* CURRENTLY READING BOOKS */}
             <Text style={styles.heading}>{'Currently Reading ...'}</Text>
@@ -97,6 +99,7 @@ export default function ReaderPage({route, navigation}) {
             </View>
             
         </SafeAreaView>
+        </ScrollView>
     )
 }
 const styles = StyleSheet.create({
