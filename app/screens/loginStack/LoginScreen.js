@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import {Text, Button, Input} from 'react-native-elements';
-import Icon from 'react-native-vector-icons/FontAwesome';
 import Icon1 from 'react-native-vector-icons/MaterialCommunityIcons';
 import Icon2 from 'react-native-vector-icons/EvilIcons';
 import {
@@ -15,14 +14,13 @@ import {
   GoogleSigninButton,
   statusCodes,
 } from '@react-native-google-signin/google-signin';
-// import { sha1 } from 'react-native-sha1';
-// import axios from 'axios';
 import {Context as AuthContext} from '../../hoc/AuthContext';
 import {darkGray, white} from '../../values/colors';
+import { ToastAndroid } from 'react-native';
 
 export default function LoginScreen(props) {
-  const [emailphone, setEmailPhone] = useState('');
-  const [password, setPassword] = useState('');
+  const [emailphone, setEmailPhone] = useState('8962607775');
+  const [password, setPassword] = useState('payalpalash');
   const [user, setUser] = useState({});
   const [isLoading, setLoading] = useState(false)
   const [passwordInputError,setPasswordError] = useState('')
@@ -30,41 +28,7 @@ export default function LoginScreen(props) {
 
   const {state, signin} = useContext(AuthContext);
 
-  // const authBaseUrl = 'https://thereadbettercompany.com/get/csrf/token/';
-  // const loginUrl = 'https://thereadbettercompany.com/user/login/post';
-
   useEffect(() => {
-    //GET UNIX TIMESTAMP
-    // const timestamp = +new Date();
-    // console.log(timestamp);
-    // //GET SHA1 HASH OF TIMESTAMP
-    // sha1(timestamp.toString()).then(hash => {
-    //   hash = hash.toLowerCase();// TO LOWER CASE BCZ URL NOT ACCEPTING UPPER CASE HASH
-    //   console.log(hash);
-
-    //   const authUrl =
-    //     authBaseUrl + timestamp.toString() + '/' + hash.toString();
-    //   axios
-    //     .get(authUrl)
-    //     .then(response => {//RESPONSE IS AUTH TOKEN AND WE SEND THIS WITH LOGIN URL
-    //       console.log('response = ', response.data);
-    //       setToken(response.data.csrf_token);
-
-    // axios
-    // .post(loginUrl, {
-    //     access: 8962607775,
-    //     password: 'payalpalash',
-    //     _token: (response.data.csrf_token).toString()
-    // })
-    // .then((res) => {
-    //   if(res.data?.isUserVerified)
-    //     console.log('login response = ', res.data);
-    // })
-    // .catch((error) => console.log(error))
-
-    //     })
-    //     .catch(error => console.log(error));
-    // });
 
     GoogleSignin.configure({
       webClientId:
@@ -139,6 +103,22 @@ export default function LoginScreen(props) {
       setPasswordError('')
       setLoading(true)
       signin({email: emailphone, password: password})
+      .then((res) => {
+        console.log('sign in successfull = ', res)
+        // if(res != 'success'){
+        //   setLoading(false)
+        //   ToastAndroid.show('Some Error Occured!',ToastAndroid.SHORT)
+        // }
+      })
+      .catch((error)=>{
+        console.log('sign in error = ',error);
+        if(error == 'Wrong Id Password'){
+          ToastAndroid.show('Incorrect Id/Password !',ToastAndroid.SHORT)
+        }else{
+          ToastAndroid.show('Some Error Occured!',ToastAndroid.SHORT)
+        }
+        setLoading(false)
+      })
     }
     // console.log(
     //   'email : ',
