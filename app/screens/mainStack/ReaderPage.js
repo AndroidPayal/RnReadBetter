@@ -11,6 +11,7 @@ import {getBooksOfAReader} from '../../values/config';
 import {ActivityIndicator} from 'react-native';
 import {ScrollView} from 'react-native';
 import { TouchableOpacity } from 'react-native';
+import { globalStyle } from '../../values/constants';
 
 export default function ReaderPage({route, navigation}) {
   const currentReader = route.params;
@@ -36,7 +37,7 @@ export default function ReaderPage({route, navigation}) {
       .get(bookURL)
       .then(response => response.data)
       .then(data => {
-        console.log('books = ', data);
+        // console.log('books = ', data);
         setCurrentBooks(data.StartedBooks);
         setStoppedBooks(data.FinishedAndStopedBooks);
         setLoading(false);
@@ -44,7 +45,7 @@ export default function ReaderPage({route, navigation}) {
   }, []); //navigation, currentReader
 
   function handleBookClick(book) {
-    console.log('clicked Book');
+    // console.log('clicked Book');
     navigation.navigate('BookStatus', {
       currentBook: book,
       currentReader: currentReader
@@ -58,9 +59,9 @@ export default function ReaderPage({route, navigation}) {
                 style={styles.cardImage}
                 source={{uri: item.thumbnail_image}} //'https://picsum.photos/700'}}//
                 resizeMode="stretch"></Card.Image>
-                <Card.FeaturedSubtitle style={styles.cardText}>
+                <Text style={[styles.cardText, globalStyle.font]}>
                 {item.name}
-                </Card.FeaturedSubtitle>
+                </Text>
             </Card>
         </TouchableOpacity>
     );
@@ -97,7 +98,7 @@ export default function ReaderPage({route, navigation}) {
     <ScrollView style={styles.parentContainer}>
       <SafeAreaView style={styles.parentContainer}>
         {/* CURRENTLY READING BOOKS */}
-        <Text style={styles.heading}>{'Currently Reading ...'}</Text>
+        <Text style={[styles.heading, globalStyle.fontBold]}>{'Currently Reading'}</Text>
         <View style={styles.flatlistContainer}>
           {scrollPercentCurrentBooks>10 ?
               <View style={{width:12, alignItems:'center', justifyContent:'center',marginLeft:-7}}>
@@ -124,7 +125,7 @@ export default function ReaderPage({route, navigation}) {
             
         </View>
         {/* BOOK SUGGESTIONS */}
-        <Text style={styles.heading}>{'Book Suggestions'}</Text>
+        <Text style={[styles.heading, globalStyle.fontBold]}>{'Book Suggestions'}</Text>
         <View style={styles.flatlistContainer}>
           <FlatList
             horizontal
@@ -135,7 +136,7 @@ export default function ReaderPage({route, navigation}) {
             key={item => item}></FlatList>
         </View>
         {/* BOOKS READ */}
-        <Text style={styles.heading}>{'Already Read Books'}</Text>
+        <Text style={[styles.heading, globalStyle.fontBold]}>{'Already Read Books'}</Text>
         <View style={styles.flatlistContainer}>
           <FlatList
             horizontal
@@ -163,6 +164,7 @@ const styles = StyleSheet.create({
     backgroundColor: white,
     flex: 1,
     padding: 10,
+    marginBottom:10
   },
   bookContainer: {elevation: 4, padding: 0, borderRadius: 7, width: 150},
   cardImage: {borderTopLeftRadius: 5, borderTopRightRadius: 5},
@@ -173,9 +175,3 @@ const styles = StyleSheet.create({
     textAlignVertical: 'center',
   },
 });
-/* get reader url = 
-{"avatar": null, "created_at": "2021-04-05T12:14:00.000000Z", "dob": "2017-02-23", "dra": "0"
-, "first_name": "raja", "gender": "0", "gra": "0", "grade": "0", "id": 31, "last_name": "babu", "lexel": "0",
- "lower_seek": 2, "performance": 0, "rbsr": 4, "rbsr_update_session_id": 0, "reminder_time": "20:00:00",
- "school_id": "102385", "status": "1"
-, "type": "general", "updated_at": "2021-04-05T12:14:00.000000Z", "upper_seek": 5, "user_id": 29}*/

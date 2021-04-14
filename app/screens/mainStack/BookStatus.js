@@ -27,6 +27,7 @@ import {
 } from '../../values/colors';
 import {getLogsOfABook, addLogToABook} from '../../values/config';
 import {Context as AuthContext} from '../../hoc/AuthContext';
+import { globalStyle } from '../../values/constants';
 
 export default function BookStatus({route, navigation}) {
   const currentBook = route.params.currentBook;
@@ -71,15 +72,15 @@ export default function BookStatus({route, navigation}) {
             padding: 5,
             margin: 5,
           }}>
-          <Text style={logStyle.commentText}>{log.log_message}</Text>
+          <Text style={[logStyle.commentText, globalStyle.font]}>{log.log_message}</Text>
           <View style={logStyle.commentStatusContainer}>
             <View style={logStyle.readTimeContainer}>
               <View style={logStyle.commentStatusDot} />
-              <Text>{log.reading_time + ' mins Read'}</Text>
+              <Text style={[globalStyle.font]}>{log.reading_time + ' mins Read'}</Text>
             </View>
             <View style={logStyle.readTimeContainer}>
               <View style={logStyle.commentStatusDot} />
-              <Text>
+              <Text style={globalStyle.font}>
                 {'Pages ' + log.from_page + ' to ' + log.no_of_pages_read}
               </Text>
             </View>
@@ -93,7 +94,7 @@ export default function BookStatus({route, navigation}) {
       <View style={addLogStyle.parent}>
         <View style={addLogStyle.headingContainer}>
           <View style={addLogStyle.headingText}>
-            <Text h4>Add Your Log</Text>
+            <Text style={globalStyle.h4Style}>Add Your Log</Text>
           </View>
           <TouchableOpacity
             style={addLogStyle.closeIcon}
@@ -103,7 +104,7 @@ export default function BookStatus({route, navigation}) {
         </View>
         <View>
           <View style={addLogStyle.inputContainer}>
-            <Text style={addLogStyle.inputHeading}>Read for (mins):</Text>
+            <Text style={[addLogStyle.inputHeading, globalStyle.font]}>Read for (mins):</Text>
             <View style={addLogStyle.inputView}>
               <Input
                 inputContainerStyle={addLogStyle.inputStyle}
@@ -113,7 +114,7 @@ export default function BookStatus({route, navigation}) {
             </View>
           </View>
           <View style={addLogStyle.inputContainer}>
-            <Text style={addLogStyle.inputHeading}>Started at page:</Text>
+            <Text style={[addLogStyle.inputHeading, globalStyle.font]}>Started at page:</Text>
             <View style={addLogStyle.inputView}>
               <Input
                 inputContainerStyle={addLogStyle.inputStyle}
@@ -123,7 +124,7 @@ export default function BookStatus({route, navigation}) {
             </View>
           </View>
           <View style={addLogStyle.inputContainer}>
-            <Text style={addLogStyle.inputHeading}>Stopped at page:</Text>
+            <Text style={[addLogStyle.inputHeading, globalStyle.font]}>Stopped at page:</Text>
             <View style={addLogStyle.inputView}>
               <Input
                 inputContainerStyle={addLogStyle.inputStyle}
@@ -133,7 +134,7 @@ export default function BookStatus({route, navigation}) {
             </View>
           </View>
           <View style={addLogStyle.inputContainer}>
-            <Text style={addLogStyle.inputHeading}>Summarise:</Text>
+            <Text style={[addLogStyle.inputHeading, globalStyle.font]}>Summarise:</Text>
             <View
               style={{
                 height: 90,
@@ -142,6 +143,7 @@ export default function BookStatus({route, navigation}) {
                 flex: 1,
               }}>
               <Input
+                inputStyle={globalStyle.font}
                 inputContainerStyle={{borderBottomWidth: 0, height: 90}}
                 onChangeText={value => setSummary(value)}
                 multiline={true}
@@ -153,7 +155,7 @@ export default function BookStatus({route, navigation}) {
           <Button
             raised
             buttonStyle={{backgroundColor: tintBackground}}
-            titleStyle={{color: black}}
+            titleStyle={[{color: black},globalStyle.fontBold]}
             title="Add Log"
             onPress={e => addNewLog(e)}></Button>
         </View>
@@ -214,10 +216,10 @@ export default function BookStatus({route, navigation}) {
     />
   ) : (
     <ScrollView style={styles.mainContainer}>
-      <SafeAreaView style={styles.mainContainer}>
+      <View style={styles.mainContainer}>
         <View style={styles.welcomeContainer}>
-          <Text style={styles.textHello}>Hello ,</Text>
-          <Text h3>{currentReader.first_name}</Text>
+          <Text style={[styles.textHello, globalStyle.font]}>{'Hello '}</Text>
+          <Text style={globalStyle.h3Style}>{currentReader.first_name + ' ,'}</Text>
         </View>
         <View style={styles.tintBox}>
           <View style={styles.bookImageParent}>
@@ -228,17 +230,17 @@ export default function BookStatus({route, navigation}) {
           </View>
           <View style={{padding: 5}}>
             <View style={{width: '90%'}}>
-              <Text style={{fontSize: 16}} numberOfLines={2}>
+              <Text style={{fontSize: 16}, globalStyle.fontBold} numberOfLines={2}>
                 {'You are reading book "' + currentBook.name + '"'}
               </Text>
             </View>
             <View style={{flexDirection: 'row', flex: 1}}>
               <View style={{flex: 1}}>
-                <Text style={{color: darkGray}}>Total mins read:</Text>
-                <Text>{currentBook.read_count + ' mins'}</Text>
+                <Text style={{color: darkGray},globalStyle.font}>Total mins read:</Text>
+                <Text style={globalStyle.font}>{currentBook.read_count + ' mins'}</Text>
               </View>
               <View style={{flex: 1}}>
-                <Text style={{color: darkGray}}>Recommendation:</Text>
+                <Text style={{color: darkGray}, globalStyle.font}>Recommendation:</Text>
                 <Text>{currentBook.recommended}</Text>
               </View>
             </View>
@@ -248,7 +250,7 @@ export default function BookStatus({route, navigation}) {
           <View style={styles.buttonStyle}>
             <Button
               buttonStyle={{borderColor: red}}
-              titleStyle={{color: red}}
+              titleStyle={[{color: red}, globalStyle.fontBold]}
               title="Stop Reading"
               type="outline"></Button>
           </View>
@@ -256,20 +258,20 @@ export default function BookStatus({route, navigation}) {
             <Button
               raised
               buttonStyle={{backgroundColor: tintBackground}}
-              titleStyle={{color: black}}
+              titleStyle={[{color: black}, globalStyle.fontBold]}
               title="Add Log"
               onPress={e => handleAddLog(e)}></Button>
           </View>
         </View>
         <View>
-          <Text style={{margin: 10, fontSize: 20}}>Past Logs</Text>
+          <Text style={[{margin: 10}, globalStyle.h4Style]}>Past Logs</Text>
         </View>
         {logsView}
 
         <BottomSheet isVisible={isBottomSheetVisible}>
           {addLogBox()}
         </BottomSheet>
-      </SafeAreaView>
+      </View>
     </ScrollView>
   );
 }
@@ -350,6 +352,8 @@ const styles = StyleSheet.create({
   },
   welcomeContainer: {
     margin: 10,
+    flexDirection:'row',
+    alignItems:'center'
   },
   textHello: {
     fontSize: 15,

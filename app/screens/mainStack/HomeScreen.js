@@ -265,7 +265,6 @@ const styles2 = StyleSheet.create({
     alignSelf: 'center',
     textAlignVertical: 'center',
   },
-
   popularContainer: {
     margin: 10,
   },
