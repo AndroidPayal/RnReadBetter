@@ -4,8 +4,9 @@ import {FlatList, View, Image} from 'react-native';
 import axios from 'axios';
 import base64 from 'react-native-base64';
 import {Card} from 'react-native-elements';
+import Icon from 'react-native-vector-icons/AntDesign'
 
-import {black, primary, white} from '../../values/colors';
+import {black, darkGray, lightGray, primary, white} from '../../values/colors';
 import {getBooksOfAReader} from '../../values/config';
 import {ActivityIndicator} from 'react-native';
 import {ScrollView} from 'react-native';
@@ -17,6 +18,11 @@ export default function ReaderPage({route, navigation}) {
   const [booksCurrentlyReading, setCurrentBooks] = useState([]);
   const [booksStoppedReading, setStoppedBooks] = useState([]);
   const [isLoading, setLoading] = useState(false);
+  const [scrollWidthCurrentBooks, setScrollWidthCurrentBooks] = useState(0);
+  const [contentWidthCurrentBooks, setContentWidthCurrentBooks] = useState(0);
+  const [scrollPercentCurrentBooks, setScrollPercentCurrentBooks] = useState(0);
+  const [scrollElementWidthPercent,setPercentWidth] = useState(50)
+
 
   useEffect(() => {
     setLoading(true);
@@ -59,7 +65,25 @@ export default function ReaderPage({route, navigation}) {
         </TouchableOpacity>
     );
   };
+  const handleScrollView= (event) =>{
+    if(event){
+    // console.log('offset = ', event.nativeEvent.contentOffset );
+    const scrollPerc = (event.nativeEvent.contentOffset.x  / (contentWidthCurrentBooks - scrollWidthCurrentBooks)) * (100 - scrollElementWidthPercent);
+    setScrollPercentCurrentBooks(scrollPerc)
+    // console.log('scroll percent =', scrollPerc);
+    }
+  }
+  const setScrollViewWidth=(e)=>{
+    if(e)
+    setScrollWidthCurrentBooks(e.nativeEvent.layout.width)
+    // console.log('scrollwidth = ', e.nativeEvent.layout);
+  }
+  const setContentSize=(width)=>{
+    if(width)
+    setContentWidthCurrentBooks(width)
+    // console.log('content width = ',width);
 
+  }
   return isLoading ? (
     <ActivityIndicator
       style={{
@@ -75,13 +99,29 @@ export default function ReaderPage({route, navigation}) {
         {/* CURRENTLY READING BOOKS */}
         <Text style={styles.heading}>{'Currently Reading ...'}</Text>
         <View style={styles.flatlistContainer}>
+          {scrollPercentCurrentBooks>10 ?
+              <View style={{width:12, alignItems:'center', justifyContent:'center',marginLeft:-7}}>
+                <Icon name='left' size={14} color={darkGray}></Icon>
+              </View>
+            :null}
           <FlatList
             horizontal
             showsHorizontalScrollIndicator={false}
             data={booksCurrentlyReading}
             renderItem={({item, index}) => renderCurrentBooks(item, index)}
             keyExtractor={(item, index) => index}
-            key={item => item}></FlatList>
+            onScroll={e=>handleScrollView(e)}
+            onLayout={ew=>setScrollViewWidth(ew)}
+            onContentSizeChange={( width,_) => {
+              setContentSize(width);
+            }}
+            key={item => item}/>
+            {scrollPercentCurrentBooks<scrollElementWidthPercent-10 ?
+              <View style={{width:12, alignItems:'center', justifyContent:'center',marginRight:-7}}>
+                <Icon name='right' size={14} color={darkGray}></Icon>
+              </View>
+            :null}
+            
         </View>
         {/* BOOK SUGGESTIONS */}
         <Text style={styles.heading}>{'Book Suggestions'}</Text>
@@ -117,6 +157,7 @@ const styles = StyleSheet.create({
   flatlistContainer: {
     height: 'auto',
     width: '100%',
+    flexDirection:'row'
   },
   parentContainer: {
     backgroundColor: white,

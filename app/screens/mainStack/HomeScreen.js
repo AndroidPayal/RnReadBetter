@@ -12,7 +12,7 @@ import Icon1 from 'react-native-vector-icons/MaterialCommunityIcons';
 import Icon2 from 'react-native-vector-icons/Entypo';
 import axios from 'axios';
 import base64 from 'react-native-base64';
-import {Card} from 'react-native-elements'
+import {Card} from 'react-native-elements';
 
 import {Context as AuthContext} from '../../hoc/AuthContext';
 import {
@@ -31,6 +31,7 @@ import {
 import {TouchableOpacity} from 'react-native';
 import AddReader from './AddReader';
 import {ActivityIndicator} from 'react-native';
+import {globalStyle} from '../../values/constants';
 
 export default function HomeScreen({navigation}) {
   const {state, signout} = useContext(AuthContext);
@@ -41,15 +42,15 @@ export default function HomeScreen({navigation}) {
   const [userCredit, setUserCredit] = useState(0);
   const [isLoading, setLoading] = useState(false);
   const [popularBooks, setPopularBooks] = useState([
-    {name: 'a', url: 'https://picsum.photos/600'},
-    {name: 'a', url: 'https://picsum.photos/700'},
-    {name: 'a', url: 'https://picsum.photos/500'},
-    {name: 'a', url: 'https://picsum.photos/400'},
-    {name: 'a', url: 'https://picsum.photos/100'},
-    {name: 'a', url: 'https://picsum.photos/300'},
-    {name: 'a', url: 'https://picsum.photos/200'},
-    {name: 'a', url: 'https://picsum.photos/100'},
-    {name: 'a', url: 'https://picsum.photos/500'},
+    {name: 'Book name', url: 'https://picsum.photos/600'},
+    {name: 'Book name', url: 'https://picsum.photos/700'},
+    {name: 'Book name', url: 'https://picsum.photos/500'},
+    {name: 'Book name', url: 'https://picsum.photos/400'},
+    {name: 'Book name', url: 'https://picsum.photos/100'},
+    {name: 'Book name', url: 'https://picsum.photos/300'},
+    {name: 'Book name', url: 'https://picsum.photos/200'},
+    {name: 'Book name', url: 'https://picsum.photos/100'},
+    {name: 'Book name', url: 'https://picsum.photos/500'},
   ]);
   const [openAddOverlay, setToggleOverlay] = useState(false);
 
@@ -107,7 +108,7 @@ export default function HomeScreen({navigation}) {
   }
   const handleReaderSelection = (e, reader) => {
     // e.preventDefault()
-    console.log('clicked reader');
+    // console.log('clicked reader');
     navigation.navigate('Reader', reader);
   };
   const readersListView = readers.map((reader, i) => (
@@ -126,16 +127,18 @@ export default function HomeScreen({navigation}) {
         <View style={styles.readerIcon}>
           <Icon1 name="face-outline" size={40} color={white} />
         </View>
-        <Text style={styles.readerName}>{reader.first_name}</Text>
+        <Text style={[styles.readerName, globalStyle.fontBold]}>
+          {reader.first_name}
+        </Text>
       </View>
     </TouchableOpacity>
   ));
   function handleAddReader() {
-    console.log('handle add reader function called');
+    // console.log('handle add reader function called');
     setToggleOverlay(true);
   }
   function cancelAddReader(e) {
-    console.log('close overlay');
+    // console.log('close overlay');
     setToggleOverlay(false);
   }
   function addNewReader(obj) {
@@ -147,12 +150,12 @@ export default function HomeScreen({navigation}) {
     const apicall = new Promise((resolve, reject) => {
       axios
         .post(addNewReaderUrl, obj)
-        .then(response=>response.data)
+        .then(response => response.data)
         .then(data => {
           console.log('add reader response = ', data);
           setLoading(false);
-          setFlagNewReader(flagNewReader===true ? false : true)
-          return resolve(data.message.toString())
+          setFlagNewReader(flagNewReader === true ? false : true);
+          return resolve(data.message.toString());
         })
         .catch(error => {
           return reject(error);
@@ -164,33 +167,23 @@ export default function HomeScreen({navigation}) {
     return (
       <>
         <View style={styles.welcomeContainer}>
-          <Text style={styles.textHello}>Hello ,</Text>
-          <Text h3>{state.name}</Text>
+          <Text style={[styles.textHello, globalStyle.font]}>Hello ,</Text>
+          <Text style={globalStyle.h3Style}>{state.name}</Text>
         </View>
         <View style={styles.welcomeContainer}>
-          <Text style={styles.grayHeading}>Here are your readers...</Text>
-          <View
-            style={{
-              width: '100%',
-              height: 'auto',
-              flexDirection: 'row',
-              marginTop: 10,
-            }}>
+          <Text style={[styles.grayHeading, globalStyle.font]}>
+            Here are your readers...
+          </Text>
+          <View style={styles.readerContainer}>
             <ScrollView horizontal={true}>{readersListView}</ScrollView>
             <TouchableOpacity onPress={e => handleAddReader()}>
-              <View
-                style={{
-                  width: 80,
-                  height: 100,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}>
+              <View style={styles2.readerBox1}>
                 <Icon2 name="plus" size={30} color={darkGray} />
               </View>
             </TouchableOpacity>
           </View>
         </View>
-        <Text h4 style={styles2.popularBookHeading}>
+        <Text style={[styles2.popularBookHeading, globalStyle.h4Style]}>
           Popular Books
         </Text>
       </>
@@ -199,9 +192,9 @@ export default function HomeScreen({navigation}) {
   const footerRender = () => {
     return (
       <View style={styles.welcomeContainer}>
-      <TouchableOpacity onPress={e => handleSignOut()}>
-        <Button title="SignOut" />
-      </TouchableOpacity>
+        <TouchableOpacity onPress={e => handleSignOut()}>
+          <Button title="SignOut" />
+        </TouchableOpacity>
       </View>
     );
   };
@@ -216,19 +209,19 @@ export default function HomeScreen({navigation}) {
     />
   ) : (
     <SafeAreaView style={styles.mainContainer}>
-      {/* <View style={styles2.popularContainer}> */}
       <FlatList
         data={popularBooks}
         renderItem={({item}) => (
           <Card containerStyle={styles2.popularGridItem}>
-              <Card.Image style={styles2.imagePopularBook} 
-              source={{uri:item.url}}
-              resizeMode='stretch'
-              ></Card.Image>
-              <Card.FeaturedSubtitle style={styles2.cardText}>{item.name}</Card.FeaturedSubtitle>
+            <Card.Image
+              style={styles2.imagePopularBook}
+              source={{uri: item.url}}
+              resizeMode="stretch"></Card.Image>
+            <Text style={[styles2.cardText, globalStyle.font]}>
+              {item.name}
+            </Text>
           </Card>
         )}
-        //Setting the number of column
         numColumns={3}
         key={item => item}
         keyExtractor={(item, index) => index}
@@ -240,30 +233,54 @@ export default function HomeScreen({navigation}) {
         cancelAddReader={cancelAddReader}
         addNewReader={addNewReader}
       />
-      {/* </View> */}
     </SafeAreaView>
   );
 }
 
 const styles2 = StyleSheet.create({
+  readerBox1: {
+    width: 80,
+    height: 100,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   popularBookHeading: {
-    margin: 10,
+    marginTop: 10,
+    marginStart: 10,
   },
-  imagePopularBook: {borderTopLeftRadius:5,borderTopRightRadius:5, height:100},
-  popularGridItem: {elevation:1,padding:0, borderRadius:7, width:100
+  imagePopularBook: {
+    borderTopLeftRadius: 5,
+    borderTopRightRadius: 5,
+    height: 100,
   },
-  cardText:{color:black, minHeight:20, alignSelf:'center',textAlignVertical:'center'},
+  popularGridItem: {
+    elevation: 1,
+    padding: 0,
+    borderRadius: 7,
+    width: 100,
+  },
+  cardText: {
+    color: black,
+    minHeight: 30,
+    alignSelf: 'center',
+    textAlignVertical: 'center',
+  },
 
   popularContainer: {
     margin: 10,
   },
 });
 const styles = StyleSheet.create({
+  readerContainer: {
+    width: '100%',
+    height: 'auto',
+    flexDirection: 'row',
+    marginTop: 10,
+  },
   readerName: {
     color: white,
     fontSize: 15,
     margin: 2,
-    fontWeight: 'bold',
   },
   readerIcon: {
     flex: 1,
@@ -272,7 +289,7 @@ const styles = StyleSheet.create({
   mainContainer: {
     backgroundColor: white,
     flex: 1,
-    paddingBottom:5
+    paddingBottom: 5,
   },
   welcomeContainer: {
     margin: 10,
@@ -280,7 +297,7 @@ const styles = StyleSheet.create({
   textHello: {
     fontSize: 15,
     color: darkGray,
-    marginBottom:-5
+    marginBottom: -5,
   },
   grayHeading: {
     color: darkGray,
