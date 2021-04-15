@@ -11,6 +11,7 @@ import moment from "moment";
 
 import { darkGray, lightGray, primary, red, white } from '../../values/colors';
 import { ToastAndroid } from 'react-native';
+import { globalStyle } from '../../values/constants';
 
 export default class AddReader extends React.Component {
   constructor(props) {
@@ -187,7 +188,7 @@ export default class AddReader extends React.Component {
         onBackdropPress={e => cancelAddReader(e)}>
         <View style={styles.parentContainer}>
           <View style={styles.headingContainer}>
-            <Text h4 style={styles.heading}>
+            <Text style={[styles.heading, globalStyle.h3Style]}>
               Add New Reader
             </Text>
             <Icon
@@ -202,13 +203,13 @@ export default class AddReader extends React.Component {
               onNext={() => this.setActivePage(activePage + 1)}
               onBack={() => this.setActivePage(activePage - 1)}
               onFinish={e => this.handleAddNewReader(e)}
-              buttonStyle={{
+              buttonStyle={[{
                 marginLeft: 'auto',
                 width: 100,
                 alignItems: 'center',
-              }}
+              }]}
               wrapperStyle={{ width: '100%', height: '95%' }} //STYLE FROM CENTER CONTENT OF PAGE
-              stepTextStyle={{ color: white }}
+              stepTextStyle={[{ color: white }]}
             />
           </View>
         </View>
@@ -223,7 +224,7 @@ const StepperPage1 = props => {
       <Input
         label={
           <View style={{ flexDirection: 'row' }}>
-            <Text>First Name</Text>
+            <Text style={globalStyle.font}>First Name</Text>
             <Text style={{ color: red }}>{' *'}</Text>
           </View>
         }
@@ -236,7 +237,7 @@ const StepperPage1 = props => {
       <Input
         label={
           <View style={{ flexDirection: 'row' }}>
-            <Text>Last Name</Text>
+            <Text style={globalStyle.font}>Last Name</Text>
             <Text style={{ color: red }}>{' *'}</Text>
           </View>
         }
@@ -247,7 +248,7 @@ const StepperPage1 = props => {
       />
 
       <View style={stylesSteppers.headingContainer}>
-        <Text>Gender</Text>
+        <Text style={globalStyle.font}>Gender</Text>
         <Text style={{ color: red }}>{' *'}</Text>
       </View>
       <RadioButton.Group
@@ -256,17 +257,17 @@ const StepperPage1 = props => {
         <View style={stylesSteppers.radioGrupParent}>
           <View style={stylesSteppers.radioButtonParent}>
             <RadioButton color={primary} value="male" />
-            <Text>Male</Text>
+            <Text style={globalStyle.font}>Male</Text>
           </View>
           <View style={stylesSteppers.radioButtonParent}>
             <RadioButton color={primary} value="female" />
-            <Text>Female</Text>
+            <Text style={globalStyle.font}>Female</Text>
           </View>
         </View>
       </RadioButton.Group>
 
       <View style={stylesSteppers.headingContainer}>
-        <Text>DOB</Text>
+        <Text style={globalStyle.font}>DOB</Text>
         <Text style={{ color: red }}>{' *'}</Text>
       </View>
       {!props.states.showDatePicker ? (
@@ -277,7 +278,7 @@ const StepperPage1 = props => {
             size={30}
           />
           <Text
-            style={stylesSteppers.dateTimeText}
+            style={[stylesSteppers.dateTimeText, globalStyle.font]}
             onPress={e => props.updateStateValue('showDatePicker', true)}>
             {props.states.dob.getDate() +
               ' ' +
@@ -306,13 +307,13 @@ const StepperPage2 = props => {
   return (
     <View style={stylesSteppers.parentContainer}>
       <View style={stylesSteppers.headingContainer}>
-        <Text>Grade</Text>
+        <Text style={globalStyle.font}>Grade</Text>
         <Text style={{ color: red }}>{' *'}</Text>
       </View>
       <View style={stylesSteppers.dateTimeContainer}>
         <Picker
           selectedValue={props.states.grade}
-          style={{ height: '100%', width: '100%' }}
+          style={[{ height: '100%', width: '100%' }]}
           mode="dropdown"
           onValueChange={(itemValue, itemIndex) =>
             props.updateStateValue('grade', itemValue)
@@ -322,7 +323,7 @@ const StepperPage2 = props => {
       </View>
 
       <View style={stylesSteppers.headingContainer}>
-        <Text>Reminder Time</Text>
+        <Text style={globalStyle.font}>Reminder Time</Text>
         <Text style={{ color: red }}>{' *'}</Text>
       </View>
       {!props.states.showTimePicker ? (
@@ -333,7 +334,7 @@ const StepperPage2 = props => {
               name="clockcircleo"
               size={30}></Icon>
             <Text
-              style={stylesSteppers.dateTimeText}
+              style={[stylesSteppers.dateTimeText, globalStyle.font]}
               onPress={e => props.updateStateValue('showTimePicker', true)}>
               {props.states.reminderTime.getHours() +
                 ' : ' +
@@ -370,7 +371,7 @@ const StepperPage3 = props => {
   return (
     <View style={stylesSteppers.parentContainer}>
       <View style={stylesSteppers.headingContainer}>
-        <Text>DRA Level (Optional)</Text>
+        <Text style={globalStyle.font}>DRA Level (Optional)</Text>
         {/* <Text style={{color: red}}>{' *'}</Text> */}
       </View>
       <View style={stylesSteppers.dateTimeContainer}>
@@ -386,7 +387,7 @@ const StepperPage3 = props => {
       </View>
 
       <View style={stylesSteppers.headingContainer}>
-        <Text>GRA Level (Optional)</Text>
+        <Text style={globalStyle.font}>GRA Level (Optional)</Text>
         {/* <Text style={{color: red}}>{' *'}</Text> */}
       </View>
       <View style={stylesSteppers.dateTimeContainer}>
@@ -402,7 +403,7 @@ const StepperPage3 = props => {
       </View>
 
       <View style={stylesSteppers.headingContainer}>
-        <Text>Lexel Level (Optional)</Text>
+        <Text style={globalStyle.font}>Lexel Level (Optional)</Text>
         {/* <Text style={{color: red}}>{' *'}</Text> */}
       </View>
       <View style={stylesSteppers.dateTimeContainer}>
@@ -438,7 +439,7 @@ const stylesSteppers = StyleSheet.create({
     alignItems: 'center',
   },
   dateTimeIcon: { margin: 5 },
-  dateTimeText: { flex: 1, textAlign: 'center' },
+  dateTimeText: { flex: 1, textAlign: 'center', fontSize:17 },
   parentContainer: { marginTop: 40 },
   headingContainer: { flexDirection: 'row', marginStart: 10, marginTop: 15 },
 });

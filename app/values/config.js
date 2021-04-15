@@ -6,3 +6,4 @@ export const getUserCredit = host + '/api/get/credit'; //base64(userId)
 export const addNewReaderUrl = host + '/user/store'; //post url
 export const getBooksOfAReader = host + '/api/get/books/related'; //base64(reader Id)
 export const getLogsOfABook = host + '/user/get/Log'; //base64( {READER_ID}/{BOOK_ID} )
+export const addLogToABook = host + '/user/addlog'; //post url

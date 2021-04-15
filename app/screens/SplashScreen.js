@@ -1,11 +1,22 @@
 import React,{useEffect} from 'react'
 import { View, StyleSheet, SafeAreaView, Image} from "react-native";
+import { CommonActions } from '@react-navigation/native';
+
 export default function SplashScreen(props) {
 
     useEffect(()=>{
         setTimeout(() => {
             //SEND TO (HAVE SESSION ? HOME : LOGIN)  SCREEN
-            props.navigation.navigate('Login')
+            // props.navigation.navigate('Login')
+
+            props.navigation.dispatch(
+                CommonActions.reset({
+                  index: 1,
+                  routes: [
+                    { name: 'Login' },
+                  ],
+                })
+              );
         }, 3000);
     },[])
 

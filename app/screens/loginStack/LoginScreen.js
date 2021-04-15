@@ -16,20 +16,20 @@ import {
 } from '@react-native-google-signin/google-signin';
 import {Context as AuthContext} from '../../hoc/AuthContext';
 import {darkGray, white} from '../../values/colors';
-import { ToastAndroid } from 'react-native';
+import {ToastAndroid} from 'react-native';
+import {globalStyle} from '../../values/constants';
 
 export default function LoginScreen(props) {
   const [emailphone, setEmailPhone] = useState('8962607775');
   const [password, setPassword] = useState('payalpalash');
   const [user, setUser] = useState({});
-  const [isLoading, setLoading] = useState(false)
-  const [passwordInputError,setPasswordError] = useState('')
-  const [accessInputError,setAccessError] = useState('')
+  const [isLoading, setLoading] = useState(false);
+  const [passwordInputError, setPasswordError] = useState('');
+  const [accessInputError, setAccessError] = useState('');
 
   const {state, signin} = useContext(AuthContext);
 
   useEffect(() => {
-
     GoogleSignin.configure({
       webClientId:
         '994684385038-u7eni5obrpt4p72ojr75tvm5efudisb4.apps.googleusercontent.com',
@@ -94,57 +94,32 @@ export default function LoginScreen(props) {
   const handleUserLogin = e => {
     console.log('handling login');
     e.preventDefault();
-    if(emailphone==''){
-      setAccessError('Required field!')
-    }else if(password==''){
-      setAccessError('')//TO DISAPPEAR ERROR MESSAGE
-      setPasswordError('Password required!')
-    }else{
-      setPasswordError('')
-      setLoading(true)
+    if (emailphone == '') {
+      setAccessError('Required field!');
+    } else if (password == '') {
+      setAccessError(''); //TO DISAPPEAR ERROR MESSAGE
+      setPasswordError('Password required!');
+    } else {
+      setPasswordError('');
+      setLoading(true);
       signin({email: emailphone, password: password})
-      .then((res) => {
-        console.log('sign in successfull = ', res)
-        // if(res != 'success'){
-        //   setLoading(false)
-        //   ToastAndroid.show('Some Error Occured!',ToastAndroid.SHORT)
-        // }
-      })
-      .catch((error)=>{
-        console.log('sign in error = ',error);
-        if(error == 'Wrong Id Password'){
-          ToastAndroid.show('Incorrect Id/Password !',ToastAndroid.SHORT)
-        }else{
-          ToastAndroid.show('Some Error Occured!',ToastAndroid.SHORT)
-        }
-        setLoading(false)
-      })
+        .then(res => {
+          console.log('sign in successfull = ', res);
+          // if(res != 'success'){
+          //   setLoading(false)
+          //   ToastAndroid.show('Some Error Occured!',ToastAndroid.SHORT)
+          // }
+        })
+        .catch(error => {
+          console.log('sign in error = ', error);
+          if (error == 'Wrong Id Password') {
+            ToastAndroid.show('Incorrect Id/Password !', ToastAndroid.SHORT);
+          } else {
+            ToastAndroid.show('Some Error Occured!', ToastAndroid.SHORT);
+          }
+          setLoading(false);
+        });
     }
-    // console.log(
-    //   'email : ',
-    //   emailphone,
-    //   'pass = ',
-    //   password,
-    //   'token = ',
-    //   currentAuthToken,
-    // );
-//     .then((res) => {
-//       console.log('signin returned', res);
-//     });
-// console.log(state);
-    // axios
-    // .post(loginUrl, {
-    //     access: emailphone,
-    //     password: password,
-    //     _token: currentAuthToken
-    // })
-    // .then((res) => {
-    //   if(res.data?.isUserVerified && res.data?.isUserAuthenticated){
-    //     console.log('login response = ', res.data);
-    //     signin({ token: currentAuthToken, email: emailphone });
-    //   }
-    // })
-    // .catch((error) => console.log(error))
   };
 
   return (
@@ -157,7 +132,7 @@ export default function LoginScreen(props) {
         <View style={styles1.loginSubContainer}>
           <View style={styles1.inputContainer}>
             <Input
-              style={styles1.inputBox}
+              style={[styles1.inputBox, globalStyle.font]}
               placeholder="E-mail / Phone no."
               value={emailphone}
               leftIcon={<Icon2 name="user" size={30} color="gray" />}
@@ -167,7 +142,7 @@ export default function LoginScreen(props) {
           </View>
           <View style={styles1.inputContainer}>
             <Input
-              style={styles1.inputBox}
+              style={[styles1.inputBox, globalStyle.font]}
               placeholder="password" //label
               value={password}
               leftIcon={
@@ -178,42 +153,49 @@ export default function LoginScreen(props) {
               errorMessage={passwordInputError}
             />
           </View>
-          <View style={styles1.loginButton}>
-            <Button 
-              title="Login" 
-              onPress={e => handleUserLogin(e)} 
-              loading={!state.token && isLoading? true : false}
-              disabled={!state.token && isLoading? true : false}
-              />
+          <View style={[styles1.loginButton]}>
+            <Button
+              titleStyle={globalStyle.fontBold}
+              title="LOGIN"
+              onPress={e => handleUserLogin(e)}
+              loading={!state.token && isLoading ? true : false}
+              disabled={!state.token && isLoading ? true : false}
+            />
           </View>
         </View>
       </View>
       <View style={styles.saperator}>
         <View style={styles.grayLine}></View>
         <View style={styles.saperatorText}>
-          <Text style={styles.textStyle}>Or Connect With</Text>
+          <Text style={[styles.textStyle, globalStyle.font]}>
+            Or Connect With
+          </Text>
         </View>
         <View style={styles.grayLine}></View>
       </View>
       <View style={styles.gooleContainer}>
         <View style={styles.termsButtonContainer}>
-          <Button title="Terms & Conditions" type="clear" />
+          <Button
+            titleStyle={globalStyle.font}
+            title="Terms & Conditions"
+            type="clear"
+          />
         </View>
         <View style={styles.googleButtonContainer}>
           {/* <Button title='google' /> */}
           {/* <View style={styles.main}> */}
-            {!user.idToken ? (
-              <GoogleSigninButton
-                style={{width: 190, height: 48}}
-                size={GoogleSigninButton.Size.Wide}
-                color={GoogleSigninButton.Color.Dark}
-                onPress={signIn}
-              />
-            ) : (
-              <TouchableOpacity onPress={signOut}>
-                <Text>Logout</Text>
-              </TouchableOpacity>
-            )}
+          {!user.idToken ? (
+            <GoogleSigninButton
+              style={{width: 190, height: 48}}
+              size={GoogleSigninButton.Size.Wide}
+              color={GoogleSigninButton.Color.Dark}
+              onPress={signIn}
+            />
+          ) : (
+            <TouchableOpacity onPress={signOut}>
+              <Text>Logout</Text>
+            </TouchableOpacity>
+          )}
           {/* </View> */}
         </View>
       </View>
@@ -229,7 +211,7 @@ const styles1 = StyleSheet.create({
     width: '100%',
     resizeMode: 'contain',
     marginTop: 70,
-    marginBottom:10
+    marginBottom: 10,
   },
   loginSubContainer: {
     flex: 1,
@@ -244,8 +226,8 @@ const styles1 = StyleSheet.create({
     marginHorizontal: 10,
   },
   loginButton: {
-    margin: 10
-  }
+    margin: 10,
+  },
 });
 const styles = StyleSheet.create({
   safeArea: {
