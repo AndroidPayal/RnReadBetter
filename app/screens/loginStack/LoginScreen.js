@@ -27,7 +27,8 @@ export default function LoginScreen(props) {
   const [passwordInputError, setPasswordError] = useState('');
   const [accessInputError, setAccessError] = useState('');
 
-  const {state, signin} = useContext(AuthContext);
+  const {value, signin} = useContext(AuthContext);
+  const state = value.state
 
   useEffect(() => {
     GoogleSignin.configure({

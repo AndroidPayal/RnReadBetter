@@ -34,8 +34,8 @@ import {ActivityIndicator} from 'react-native';
 import {globalStyle} from '../../values/constants';
 
 export default function HomeScreen({navigation}) {
-  const {state, signout} = useContext(AuthContext);
-
+  const {value, signout} = useContext(AuthContext);
+  const state = value.state;
   const encodedUserId = base64.encode(state.userId.toString()); //(state.userId ? state.userId.toString() : '29')
   const [readers, setReaders] = useState([]);
   const [flagNewReader, setFlagNewReader] = useState(false);
@@ -91,7 +91,7 @@ export default function HomeScreen({navigation}) {
   }, []); //navigation,credits => REMOVED THIS BCZ IT CAUSED INFINITE LOOP OF THIS FUNCTIONAL COMPONENT
 
   useEffect(() => {
-    console.log('called fetch reader useeffect');
+    // console.log('called fetch reader useeffect');
     setLoading(true);
     const readersUrl = getReadersUrl + '/' + encodedUserId;
     //API TO FETCH READERS
@@ -209,7 +209,11 @@ export default function HomeScreen({navigation}) {
     />
   ) : (
     <SafeAreaView style={styles.mainContainer}>
-      <FlatList
+      <View style={styles.welcomeContainer}>
+        {/* <TouchableOpacity onPress={e => handleSignOut()}> */}
+        <Button title="SignOut" onPress={e => handleSignOut()} />
+      </View>
+      {/* <FlatList
         data={popularBooks}
         renderItem={({item}) => (
           <Card containerStyle={styles2.popularGridItem}>
@@ -227,7 +231,7 @@ export default function HomeScreen({navigation}) {
         keyExtractor={(item, index) => index}
         ListHeaderComponent={headerRender}
         // ListFooterComponent={footerRender}
-      />
+      /> */}
       <AddReader
         openAddOverlay={openAddOverlay}
         cancelAddReader={cancelAddReader}

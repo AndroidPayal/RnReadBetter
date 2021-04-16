@@ -1,22 +1,7 @@
-import React,{ useReducer } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import React,{ useReducer, useEffect } from "react";
 
 export default (reducer, action, defaultValue) =>{
     const Context = React.createContext();
-
-    // let promise = new Promise((resolve, reject) => {
-    //     try {
-    //         let storageVal = AsyncStorage.getItem('@CurrentUser')
-    //         resolve(storageVal)
-    //     } catch (error) {
-    //         reject(error)
-    //     }
-    //   });
-    
-    // async function defaultUser(){
-    //      return await promise
-    //     };
-    console.log('default val = ', defaultValue);
 
     const Provider = ({children}) => {
        
