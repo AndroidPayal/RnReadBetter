@@ -64,6 +64,7 @@ const signin = dispatch => {
             })
             .then(async res => {
               if (res.data?.isUserVerified && res.data?.isUserAuthenticated) {
+                dataInitialized = true
                 //SENDING IN TO THIS USER AND SETTING LOCAL STORAGE FOR SESSION
                 await AsyncStorage.setItem(
                   '@CurrentUser',
@@ -124,7 +125,7 @@ export const Provider = ({children}) => {
   const value = {
     state,
     dataInitialized,
-    fetchItems: async () => {
+    fetchItems: async () => {//FETCH FUNCTION TO INITIALLISE SESSION WITH LOCAL STORAGE
       dispatch({type: ''});
       // axios
       // .get("https://jsonplaceholder.typicode.com/todos")
@@ -139,8 +140,37 @@ export const Provider = ({children}) => {
         if (val !== null) {
           const localData = JSON.parse(val);
           dataInitialized = true;
+          
+          const timestamp = +new Date();
+          console.log('timestamp1 = ', timestamp);
+          //GET SHA1 HASH OF TIMESTAMP
+          let hash = '';
+          await sha1(timestamp.toString()).then(hash2 => {
+            hash = hash2.toLowerCase(); // TO LOWER CASE BCZ URL NOT ACCEPTING UPPER CASE HASH
+            console.log('hash of timestamp1 = ', hash);
+          });
+      
+          const authUrl =
+            authBaseUrl + '/' + timestamp.toString() + '/' + hash.toString();
 
-          dispatch({type: 'initials', payload: localData});
+            
+            axios
+              .get(authUrl)
+              .then(function(response) {
+                console.log('old token =', localData.token);
+                localData.token = response.data.csrf_token
+                console.log('new token =', response.data.csrf_token);
+                 AsyncStorage.setItem(
+                  '@CurrentUser',
+                  JSON.stringify({
+                    token: response.data.csrf_token,
+                    email: localData.email,
+                    userId: localData.userId,
+                    name: localData.name,
+                  }),
+                );
+                dispatch({type: 'initials', payload: localData});
+              });
         }
       } catch (error) {
         console.log('error : ', error);
