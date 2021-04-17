@@ -34,7 +34,8 @@ export default function BookStatus({route, navigation}) {
   const currentReader = route.params.currentReader;
   const encodedReaderId = base64.encode(currentReader.id.toString());
   const encodedBookId = base64.encode(currentBook.id.toString());
-  const {state} = useContext(AuthContext);
+  const {value} = useContext(AuthContext);
+  const state = value.state
 
   const [logs, setlogs] = useState([]);
   const [isBottomSheetVisible, setbottomSheetVisible] = useState(false);
