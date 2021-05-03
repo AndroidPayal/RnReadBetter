@@ -7,21 +7,21 @@ export default function SplashScreen(props) {
   const {value} = useContext(AuthContext);
   const state = value.state;
 
-  useEffect(() => {
-    //SEND TO (HAVE SESSION ? HOME : LOGIN)  SCREEN
-    const redirectScreen = state.token ? 'Home' : 'Login';
-    setTimeout(() => {
-      // props.navigation.navigate('Login')
+  // useEffect(() => {
+  //   //SEND TO (HAVE SESSION ? HOME : LOGIN)  SCREEN
+  //   const redirectScreen = state.token ? 'Home' : 'Login';
+  //   setTimeout(() => {
+  //     // props.navigation.navigate('Login')
 
-      //THIS DISPACH REMOVES SPLASH SCREEN FROM STACK ONCE WE REACH NEXT SCREEN
-      props.navigation.dispatch(
-        CommonActions.reset({
-          index: 1,
-          routes: [{name: redirectScreen}],
-        }),
-      );
-    }, 3000);
-  }, []);
+  //     //THIS DISPACH REMOVES SPLASH SCREEN FROM STACK ONCE WE REACH NEXT SCREEN
+  //     props.navigation.dispatch(
+  //       CommonActions.reset({
+  //         index: 1,
+  //         routes: [{name: redirectScreen}],
+  //       }),
+  //     );
+  //   }, 3000);
+  // }, []);
 
   return (
     <SafeAreaView style={styles.background}>

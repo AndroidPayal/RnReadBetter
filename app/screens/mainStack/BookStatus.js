@@ -2,11 +2,10 @@ import React, {useEffect, useState, useContext} from 'react';
 import {
   StyleSheet,
   View,
-  SafeAreaView,
   Image,
-  ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  FlatList,
 } from 'react-native';
 import {Text, BottomSheet, Button, Input} from 'react-native-elements';
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -15,7 +14,6 @@ import base64 from 'react-native-base64';
 
 import {
   white,
-  darkGray,
   lightGray,
   tintBackground,
   tintDarkBackground,
@@ -25,9 +23,13 @@ import {
   logBackground,
   primary,
 } from '../../values/colors';
-import {getLogsOfABook, addLogToABook} from '../../values/config';
+import {
+  getLogsOfABook,
+  addLogToABook,
+  getUserCredit,
+} from '../../values/config';
 import {Context as AuthContext} from '../../hoc/AuthContext';
-import { globalStyle } from '../../values/constants';
+import {globalStyle, globalTitleBar} from '../../values/constants';
 
 export default function BookStatus({route, navigation}) {
   const currentBook = route.params.currentBook;
@@ -35,7 +37,8 @@ export default function BookStatus({route, navigation}) {
   const encodedReaderId = base64.encode(currentReader.id.toString());
   const encodedBookId = base64.encode(currentBook.id.toString());
   const {value} = useContext(AuthContext);
-  const state = value.state
+  const state = value.state;
+  const encodedUserId = base64.encode(state.userId.toString());
 
   const [logs, setlogs] = useState([]);
   const [isBottomSheetVisible, setbottomSheetVisible] = useState(false);
@@ -45,8 +48,31 @@ export default function BookStatus({route, navigation}) {
   const [stopPage, setStopPage] = useState(0);
   const [summary, setSummary] = useState('');
   const [flagAddLog, setFlagAddLog] = useState(false);
+  const [userCredit, setUserCredit] = useState(0);
 
-  const logsView = logs.map((log, index) => {
+  console.log('book=', currentBook);
+  function setTitleBar() {
+    const creditUrl = getUserCredit + '/' + encodedUserId;
+    //API TO FETCH User Credit
+    axios
+      .get(creditUrl)
+      .then(response2 => response2.data)
+      .then(result => {
+        setUserCredit(result);
+        navigation.setOptions(
+          globalTitleBar(
+            state.name,
+            currentReader.first_name + "'s Bookshelf",
+            result.credits,
+            navigation,
+            false,
+          ),
+        );
+        setLoading(false);
+      })
+      .catch(error => console.log('credit error = ', error));
+  }
+  function logsView(item, index) {
     return (
       <View key={index} style={logStyle.parent}>
         <View style={logStyle.linearChartContainer}>
@@ -73,29 +99,35 @@ export default function BookStatus({route, navigation}) {
             padding: 5,
             margin: 5,
           }}>
-          <Text style={[logStyle.commentText, globalStyle.font]}>{log.log_message}</Text>
+          <Text style={[logStyle.commentText, globalStyle.font]}>
+            {item.log_message}
+          </Text>
           <View style={logStyle.commentStatusContainer}>
             <View style={logStyle.readTimeContainer}>
               <View style={logStyle.commentStatusDot} />
-              <Text style={[globalStyle.font]}>{log.reading_time + ' mins Read'}</Text>
+              <Text style={[globalStyle.font]}>
+                {item.reading_time + ' mins Read'}
+              </Text>
             </View>
             <View style={logStyle.readTimeContainer}>
               <View style={logStyle.commentStatusDot} />
               <Text style={globalStyle.font}>
-                {'Pages ' + log.from_page + ' to ' + log.no_of_pages_read}
+                {'Pages ' + item.from_page + ' to ' + item.no_of_pages_read}
               </Text>
             </View>
           </View>
         </View>
       </View>
     );
-  });
+  }
   const addLogBox = () => {
     return (
       <View style={addLogStyle.parent}>
         <View style={addLogStyle.headingContainer}>
           <View style={addLogStyle.headingText}>
-            <Text style={globalStyle.h4Style}>Add Your Log</Text>
+            <Text style={[{fontSize: 22}, globalStyle.fontMedium]}>
+              Add Your Log
+            </Text>
           </View>
           <TouchableOpacity
             style={addLogStyle.closeIcon}
@@ -105,7 +137,9 @@ export default function BookStatus({route, navigation}) {
         </View>
         <View>
           <View style={addLogStyle.inputContainer}>
-            <Text style={[addLogStyle.inputHeading, globalStyle.font]}>Read for (mins):</Text>
+            <Text style={[addLogStyle.inputHeading, globalStyle.font]}>
+              Read for (mins):
+            </Text>
             <View style={addLogStyle.inputView}>
               <Input
                 inputContainerStyle={addLogStyle.inputStyle}
@@ -115,7 +149,9 @@ export default function BookStatus({route, navigation}) {
             </View>
           </View>
           <View style={addLogStyle.inputContainer}>
-            <Text style={[addLogStyle.inputHeading, globalStyle.font]}>Started at page:</Text>
+            <Text style={[addLogStyle.inputHeading, globalStyle.font]}>
+              Started at page:
+            </Text>
             <View style={addLogStyle.inputView}>
               <Input
                 inputContainerStyle={addLogStyle.inputStyle}
@@ -125,7 +161,9 @@ export default function BookStatus({route, navigation}) {
             </View>
           </View>
           <View style={addLogStyle.inputContainer}>
-            <Text style={[addLogStyle.inputHeading, globalStyle.font]}>Stopped at page:</Text>
+            <Text style={[addLogStyle.inputHeading, globalStyle.font]}>
+              Stopped at page:
+            </Text>
             <View style={addLogStyle.inputView}>
               <Input
                 inputContainerStyle={addLogStyle.inputStyle}
@@ -135,7 +173,9 @@ export default function BookStatus({route, navigation}) {
             </View>
           </View>
           <View style={addLogStyle.inputContainer}>
-            <Text style={[addLogStyle.inputHeading, globalStyle.font]}>Summarise:</Text>
+            <Text style={[addLogStyle.inputHeading, globalStyle.font]}>
+              Summarise:
+            </Text>
             <View
               style={{
                 height: 90,
@@ -156,7 +196,7 @@ export default function BookStatus({route, navigation}) {
           <Button
             raised
             buttonStyle={{backgroundColor: tintBackground}}
-            titleStyle={[{color: black},globalStyle.fontBold]}
+            titleStyle={[{color: black}, globalStyle.fontBold]}
             title="Add Log"
             onPress={e => addNewLog(e)}></Button>
         </View>
@@ -179,9 +219,12 @@ export default function BookStatus({route, navigation}) {
       .post(addLogToABook, obj)
       .then(response => response.data)
       .then(data => {
-        console.log('add log response = ', data);
+        // console.log('add log response = ', data);
         // setLoading(false); //NO NEED BCZ FLAG UPDATE WILL CALL USEEFFECT->USEEFFECT WILL UPDATE LOADER
         setFlagAddLog(!flagAddLog);
+      })
+      .catch(error => {
+        console.log('addLog url response error = ', error);
       });
     closeAddLog(e);
   }
@@ -191,62 +234,60 @@ export default function BookStatus({route, navigation}) {
   function closeAddLog(e) {
     setbottomSheetVisible(false);
   }
-  useEffect(() => {
-    setLoading(true);
-    const fetchLog =
-      getLogsOfABook + '/' + encodedReaderId + '/' + encodedBookId;
-
-    axios
-      .get(fetchLog)
-      .then(response => response.data)
-      .then(data => {
-        // console.log('logs = ', data.datas);
-        setlogs(data.datas);
-        setLoading(false);
-      });
-  }, [flagAddLog]);
-
-  return isLoading ? (
-    <ActivityIndicator
-      style={{
-        flex: 1,
-        justifyContent: 'center',
-      }}
-      size="large"
-      color={primary}
-    />
-  ) : (
-    <ScrollView style={styles.mainContainer}>
-      <View style={styles.mainContainer}>
-        <View style={styles.welcomeContainer}>
-          <Text style={[styles.textHello, globalStyle.font]}>{'Hello '}</Text>
-          <Text style={globalStyle.h3Style}>{currentReader.first_name + ' ,'}</Text>
-        </View>
+  const headerRender = () => {
+    return (
+      <>
         <View style={styles.tintBox}>
-          <View style={styles.bookImageParent}>
-            <Image
-              style={styles.bookImage}
-              source={{uri: currentBook.thumbnail_image}} //'https://picsum.photos/700'}}//
-              resizeMode="stretch"></Image>
-          </View>
-          <View style={{padding: 5}}>
-            <View style={{width: '90%'}}>
-              <Text style={{fontSize: 16}, globalStyle.fontBold} numberOfLines={2}>
-                {'You are reading book "' + currentBook.name + '"'}
-              </Text>
+          <View style={{flexDirection: 'row'}}>
+            <View style={styles.bookImageParent}>
+              <Image
+                style={styles.bookImage}
+                source={{
+                  uri: currentBook.thumbnail_image
+                    ? currentBook.thumbnail_image
+                    : default_BookImage,
+                }} //'https://picsum.photos/700'}}//
+                resizeMode="stretch"></Image>
             </View>
-            <View style={{flexDirection: 'row', flex: 1}}>
-              <View style={{flex: 1}}>
-                <Text style={{color: darkGray},globalStyle.font}>Total mins read:</Text>
-                <Text style={globalStyle.font}>{currentBook.read_count + ' mins'}</Text>
+            <View style={{padding: 5, flex: 1}}>
+              <View>
+                <Text
+                  style={[
+                    {fontSize: 10, color: tintDarkBackground},
+                    globalStyle.font,
+                  ]}>
+                  Currently Reading
+                </Text>
+                <Text
+                  style={[{fontSize: 15}, globalStyle.fontMedium]}
+                  numberOfLines={3}>
+                  {currentBook.name}
+                </Text>
               </View>
-              <View style={{flex: 1}}>
-                <Text style={{color: darkGray}, globalStyle.font}>Recommendation:</Text>
-                <Text>{currentBook.recommended}</Text>
+              <View style={{flexDirection: 'row', flex: 1}}>
+                <View style={{flex: 1, justifyContent: 'flex-end'}}>
+                  <Text
+                    style={[{color: black, opacity: 0.6}, globalStyle.font]}>
+                    Total mins read:
+                  </Text>
+                  <Text style={[globalStyle.fontMedium]}>
+                    {currentBook.read_count + ' mins'}
+                  </Text>
+                </View>
+                <View style={{flex: 1, justifyContent: 'flex-end'}}>
+                  <Text
+                    style={[{color: black, opacity: 0.6}, globalStyle.font]}>
+                    Total pages read:
+                  </Text>
+                  <Text style={[globalStyle.fontMedium]}>
+                    {currentBook.recommended}
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
         </View>
+
         <View style={styles.buttonContainer}>
           <View style={styles.buttonStyle}>
             <Button
@@ -265,15 +306,50 @@ export default function BookStatus({route, navigation}) {
           </View>
         </View>
         <View>
-          <Text style={[{margin: 10}, globalStyle.h4Style]}>Past Logs</Text>
+          <Text style={[{margin: 10}, globalStyle.subHeading]}>Past Logs</Text>
         </View>
-        {logsView}
+      </>
+    );
+  };
+  useEffect(() => {
+    setLoading(true);
+    const fetchLog =
+      getLogsOfABook + '/' + encodedReaderId + '/' + encodedBookId;
 
-        <BottomSheet isVisible={isBottomSheetVisible}>
-          {addLogBox()}
-        </BottomSheet>
-      </View>
-    </ScrollView>
+    axios
+      .get(fetchLog)
+      .then(response => response.data)
+      .then(data => {
+        // console.log('logs = ', data.datas);
+        setlogs(data.datas);
+        setTitleBar();
+      })
+      .catch(error => {
+        console.log('fetch log response error = ', error);
+      });
+  }, [flagAddLog]);
+
+  return isLoading ? (
+    <ActivityIndicator
+      style={{
+        flex: 1,
+        justifyContent: 'center',
+        backgroundColor: white
+      }}
+      size="large"
+      color={primary}
+    />
+  ) : (
+    <View style={styles.mainContainer}>
+      <FlatList
+        data={logs}
+        renderItem={({item, index}) => logsView(item, index)}
+        keyExtractor={(item, index) => index}
+        key={item => item}
+        ListHeaderComponent={headerRender}
+      />
+      <BottomSheet isVisible={isBottomSheetVisible}>{addLogBox()}</BottomSheet>
+    </View>
   );
 }
 const addLogStyle = StyleSheet.create({
@@ -340,8 +416,8 @@ const styles = StyleSheet.create({
     backgroundColor: tintBackground,
     width: '95%',
     height: 120,
-    flexDirection: 'row',
     alignSelf: 'center',
+    marginTop: 10,
   },
   bookImageParent: {justifyContent: 'center', margin: 7},
   bookImage: {width: 90, height: 100, borderRadius: 3},
@@ -353,12 +429,11 @@ const styles = StyleSheet.create({
   },
   welcomeContainer: {
     margin: 10,
-    flexDirection:'row',
-    alignItems:'center'
   },
   textHello: {
-    fontSize: 15,
-    color: darkGray,
+    fontSize: 20,
+    color: black,
     marginBottom: -5,
+    opacity: 0.5,
   },
 });

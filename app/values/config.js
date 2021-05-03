@@ -1,9 +1,15 @@
 const host = 'https://thereadbettercompany.com';
+export const default_BookImage = 'https://image.similarpng.com/very-thumbnail/2020/12/Cartoon-yellow-book-illustration-premium-vector-PNG.png';
 export const authBaseUrl = host + '/get/csrf/token'; //timestamp/sha1(timastamp)
 export const loginUrl = host + '/user/login/post'; //post url
+export const checkAuthUrl = host + '/check/user/auth'; //post url
+export const googleAuthUrl = host + '/user/google/authentication' //post url
 export const getReadersUrl = host + '/api/get/all/readers'; //base64(userId)
 export const getUserCredit = host + '/api/get/credit'; //base64(userId)
 export const addNewReaderUrl = host + '/user/store'; //post url
 export const getBooksOfAReader = host + '/api/get/books/related'; //base64(reader Id)
 export const getLogsOfABook = host + '/user/get/Log'; //base64( {READER_ID}/{BOOK_ID} )
 export const addLogToABook = host + '/user/addlog'; //post url
+export const getBookRecommendedForAReader = host + '/app/reader' //{reader id}/start/reading
+export const setBookStartReading = host + '/user/reader' //{reader id}/start/reading/book/{book_id}
+export const updateReminderTimeUrl = host + '/user/update/reminder'//{reader}

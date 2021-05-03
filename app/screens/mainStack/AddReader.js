@@ -57,7 +57,7 @@ export default class AddReader extends React.Component {
   handleAddNewReader = e => {
     const { firstName, lastName, gender, dob, reminderTime, grade, school, draLevel, graLevel, lexelLevel } = this.state;
     const formated_dob = moment(dob).format('YYYY-MM-DD')
-    const formated_time = moment(reminderTime).format('HH-mm-ss')
+    const formated_time = moment(reminderTime).format('HH:mm:ss')
     const obj = {
       firstname_reader: firstName,
       lastname_reader: lastName,
@@ -85,8 +85,12 @@ export default class AddReader extends React.Component {
       this.props.addNewReader(obj)
       .then((response) => {
         console.log('add reader promise res = ', response);
-        ToastAndroid.show('Reader Created', ToastAndroid.SHORT)
-        this.deleteStateValues()
+        ToastAndroid.show(response, ToastAndroid.SHORT)
+        try {
+          this.deleteStateValues()
+        } catch (error) {
+          console.log('error:', error);
+        }
       })
       .catch((error) => {
         console.log('add reader error',error);
@@ -159,6 +163,7 @@ export default class AddReader extends React.Component {
       heading: {
         flex: 1,
         textAlign: 'center',
+        fontSize:22
       },
     });
 
@@ -188,7 +193,7 @@ export default class AddReader extends React.Component {
         onBackdropPress={e => cancelAddReader(e)}>
         <View style={styles.parentContainer}>
           <View style={styles.headingContainer}>
-            <Text style={[styles.heading, globalStyle.h3Style]}>
+            <Text style={[styles.heading, globalStyle.fontMedium]}>
               Add New Reader
             </Text>
             <Icon
