@@ -1,8 +1,9 @@
 import {StyleSheet, Text, View, Image, TouchableOpacity} from 'react-native';
 import React from 'react';
-import {black, lightGray, tintDarkBackground, white} from './colors';
+import {black, darkGray, lightGray, tintDarkBackground, white} from './colors';
 import {Searchbar, Input} from 'react-native-elements';
 import Icon from 'react-native-vector-icons/AntDesign';
+import Icon1 from 'react-native-vector-icons/FontAwesome';
 
 const font = 'Roboto-Regular_400'; // 400 IS FONT WEIGHT
 const font_medium = 'Roboto-Medium_500';
@@ -42,16 +43,16 @@ export function globalTitleBar(userName, name, credit, navigation, dataLeft) {
   };
 
   return (name || credit || navigation || dataLeft) ? {
-    headerTitle: (
-      <Text style={[globalStyle.fontMedium, {color: white}]}>{name}</Text>
-    ),
+    // headerTitle: (
+    //   <Text style={[globalStyle.fontMedium, {color: white}]}>{name+'123456789'}</Text>
+    // ),
     headerStyle: {
       backgroundColor: black,
     },
     headerRight: () => (
       <View style={stylesHeader.rightContainer}>
         <View style={stylesHeader.userName}>
-          <Text style={[{color: white}, globalStyle.fontMedium]}>
+          <Text style={[{color: white}, globalStyle.fontBold]}>
             {userName}
           </Text>
         </View>
@@ -82,28 +83,23 @@ export function globalTitleBar(userName, name, credit, navigation, dataLeft) {
               style={stylesHeader.drawerImage}
             />
           </TouchableOpacity>
-          <View
+          {/* <View
             style={{
-              height: 45,
+              height: 40,
               backgroundColor: lightGray,
               borderRadius: 10,
               marginLeft: 10,
-              marginTop: 5,
+              marginTop: 10,
               width: 200,
               flexDirection: 'row',
-            }}>
-            <View style={{justifyContent: 'center', margin: 5}}>
-              <Icon name="search1" size={14} />
+            }}> */}
+            <TouchableOpacity style={{justifyContent: 'center', marginHorizontal: 10}}>
+              <Icon1 name="search" size={18} color={white} />
+            </TouchableOpacity>
+            {/* <View style={{width: '100%',justifyContent: 'center'}}>
+              <Text style={[{opacity:0.60}, globalStyle.font]} >Search Here...</Text>
             </View>
-            <View style={{width: '100%'}}>
-              <Input
-                placeholder="Search Here..."
-                inputContainerStyle={{borderBottomWidth: 0}}
-                inputStyle={globalStyle.font}
-                onChangeText={value => console.log(value)}
-              />
-            </View>
-          </View>
+          </View> */} 
         </View>
       ) : (
         <View style={{flexDirection: 'row', flex: 1}}>
@@ -117,6 +113,10 @@ export function globalTitleBar(userName, name, credit, navigation, dataLeft) {
               style={{marginLeft: 5}}
             />
           </TouchableOpacity>
+          {/* ADDED TEXT INSTED OF TITLE BCZ TITLE TOOK BIG MARGIN START AS DEFAULT */}
+          <View style={{justifyContent:'center', margin:5}}>
+            <Text style={[globalStyle.fontMedium, {color: white, fontSize:20}]}>{name}</Text>
+          </View>
         </View>
       ),
   }

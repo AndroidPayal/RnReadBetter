@@ -22,7 +22,7 @@ import {globalStyle} from '../../values/constants';
 
 export default function LoginScreen(props) {
   const [emailphone, setEmailPhone] = useState('8962607775');
-  const [password, setPassword] = useState('payalpalash');
+  const [password, setPassword] = useState('12345678');
   const [user, setUser] = useState({});
   const [isLoading, setLoading] = useState(false);
   const [passwordInputError, setPasswordError] = useState('');
@@ -206,12 +206,18 @@ export default function LoginScreen(props) {
             <View style={[stylePhoneLogin.loginButton]}>
               <Button
                 icon={
-                  <Icon3
-                    name="google"
-                    size={20}
-                    color={secondary}
-                    style={{marginHorizontal:10}}
-                  />
+                  <Image
+                    style={{width:30, height:30, marginHorizontal:10}}
+                    source={{
+                      uri: 'https://www.freepnglogos.com/uploads/google-logo-png/google-logo-png-google-logos-vector-eps-cdr-svg-download-10.png'
+                    }}
+                    resizeMode="stretch"></Image>
+                  // <Icon3
+                  //   name="google"
+                  //   size={20}
+                  //   color={secondary}
+                  //   style={{marginHorizontal:10}}
+                  // />
                 }
                 type='outline'
                 buttonStyle={{borderColor:secondary}}
@@ -235,7 +241,7 @@ export default function LoginScreen(props) {
           <Button
             titleStyle={[{color:secondary},globalStyle.font]}
             title="Terms & Conditions"
-            type="clear"
+            type="clear" 
           />
         {/* </View> */}
       </View>
@@ -298,10 +304,10 @@ const styles = StyleSheet.create({
   },
   gooleContainer: {
     height: 'auto',
-    // justifyContent: 'center',
-    flexDirection: 'row',
-    marginBottom: 20,
-    marginStart:10
+    justifyContent: 'center',
+    // flexDirection: 'row',
+    marginBottom: 5,
+    // marginStart:10
   },
   googleButtonContainer: {
     // flex: 1,

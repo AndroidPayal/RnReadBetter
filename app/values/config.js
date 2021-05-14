@@ -13,3 +13,7 @@ export const addLogToABook = host + '/user/addlog'; //post url
 export const getBookRecommendedForAReader = host + '/app/reader' //{reader id}/start/reading
 export const setBookStartReading = host + '/user/reader' //{reader id}/start/reading/book/{book_id}
 export const updateReminderTimeUrl = host + '/user/update/reminder'//{reader}
+export const stopBookReadingUrl = host + '/user/reader'//{reader_id}/stop/reading/book/{book_id}
+export const getBooksRecommendedForAll = host + '/user/all/readers/recomm' //get url
+export const fetchBookTagsUrl = host + '/api/get/book'///{book_id}/tags
+export const fetchSchoolUrl = host + '/api/get/school'//{pincode}

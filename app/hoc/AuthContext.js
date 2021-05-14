@@ -133,29 +133,35 @@ const signinGoogle = dispatch => {
               Id_token: googleData.idToken,
               _token: currentAuthToken,
             })
+            .then(response=> response.data)
             .then(async res => {
               console.log('server google res =', res);
-              // dataInitialized = true;
-              // //SENDING IN TO THIS USER AND SETTING LOCAL STORAGE FOR SESSION
-              // await AsyncStorage.setItem(
-              //   '@CurrentUser',
-              //   JSON.stringify({
-              //     token: currentAuthToken,
-              //     email: email,
-              //     userId: googleData.user.id,
-              //     name: res.data.User.name,
-              //   }),
-              // );
-              // dispatch({
-              //   type: 'signin',
-              //   payload: {
-              //     token: currentAuthToken,
-              //     email,
-              //     userId: res.data.User.id,
-              //     name: res.data.User.name,
-              //   },
-              // });
-              // return resolve('success');
+              if (!res.isUserVerified || !res.isUserAuthenticated) {
+                return reject('User not authenticated');
+              }else{
+                dataInitialized = true;
+                //SENDING IN TO THIS USER AND SETTING LOCAL STORAGE FOR SESSION
+                await AsyncStorage.setItem(
+                  '@CurrentUser',
+                  JSON.stringify({
+                    token: currentAuthToken,
+                    email: res.User.access,
+                    userId: res.User.id,
+                    name: res.User.name,
+                  }),
+                );
+                dispatch({
+                  type: 'signin',
+                  payload: {
+                    token: currentAuthToken,
+                    email: res.User.access,
+                    userId: res.User.id,
+                    name: res.User.name,
+                  },
+                });
+                return resolve('success');
+              }
+             
             })
             .catch(error => {
               console.log('google login url response error = ', error);

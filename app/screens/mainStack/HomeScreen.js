@@ -24,6 +24,8 @@ import {
   getReadersUrl,
   getUserCredit,
   addNewReaderUrl,
+  getBooksRecommendedForAll,
+  default_BookImage
 } from '../../values/config';
 import {TouchableOpacity} from 'react-native';
 import AddReader from './AddReader';
@@ -38,18 +40,53 @@ export default function HomeScreen({navigation}) {
   const [flagNewReader, setFlagNewReader] = useState(false);
   const [userCredit, setUserCredit] = useState(0);
   const [isLoading, setLoading] = useState(false);
-  const [popularBooks, setPopularBooks] = useState([
-    {name: 'Book name', url: 'https://picsum.photos/600'},
-    {name: 'Book name', url: 'https://picsum.photos/700'},
-    {name: 'Book name', url: 'https://picsum.photos/500'},
-    {name: 'Book name', url: 'https://picsum.photos/400'},
-    {name: 'Book name', url: 'https://picsum.photos/100'},
-    {name: 'Book name', url: 'https://picsum.photos/300'},
-    {name: 'Book name', url: 'https://picsum.photos/200'},
-    {name: 'Book name', url: 'https://picsum.photos/100'},
-    {name: 'Book name', url: 'https://picsum.photos/500'},
-  ]);
+  const [recommendedBooks, setRecommendedBooks] = useState([])
+  const [popularBooks, setPopularBooks] = useState([]);
   const [openAddOverlay, setToggleOverlay] = useState(false);
+
+  function createEventInLocalStorage(localDataArray, newEventId, formatedDate, reminderAt, name) {
+    if (!localDataArray) {
+      localDataArray = {events: []};
+    }
+    const temp = {
+      reminderTime: reminderAt,
+      readerName: name,
+      createdAt: formatedDate,
+      eventId: newEventId,
+    };
+    localDataArray.events.push(temp);
+    console.log('final data adding to local = ', localDataArray);
+    AsyncStorage.setItem(
+      '@ReminderEvents',
+      JSON.stringify(localDataArray),
+    );
+  }
+  async function createEventInCalender(title, start, end){
+    const createEvent = await new Promise((resolve, reject) => {
+      RNCalendarEvents.saveEvent(title, {
+          startDate: start,
+          endDate: end,
+          alarms: [
+            {
+              date: 5, //ALARM 5 MINUTE BRFORE TO START TIME
+            },
+          ],
+        },
+      )              
+      .then(eventId => {
+        console.log('new event id= ', eventId);
+        resolve(eventId)
+      })
+      .catch(error=>reject(error))
+    })
+    return createEvent;
+  }
+  function removeEventFromLocalStorage(localArray, data1) {
+    const index = localArray?.events?.findIndex(
+      obj => obj.readerName === data1,
+    );
+    localArray.events.splice(index, 1); //Remove item of this index
+  }
 
   useEffect(() => {
     const readerReminder = new Promise(async (resolve, reject) => {
@@ -57,11 +94,8 @@ export default function HomeScreen({navigation}) {
         (readOnly = false),
       );
 
-      // RNCalendarEvents.removeEvent('282')//247
-      // AsyncStorage.removeItem('@ReminderEvents')
-
       if (permission === 'authorized') {
-        if (readers != []) {
+        if (readers.length > 0) {
           const today = moment(new Date()).toISOString();
           const endDate = moment(today).add(3, 'days').toISOString();
           const calenderCurrentEvents = await RNCalendarEvents.fetchAllEvents(
@@ -71,9 +105,6 @@ export default function HomeScreen({navigation}) {
           var localEvents = JSON.parse(
             await AsyncStorage.getItem('@ReminderEvents'),
           );
-
-          // console.log('calender event =', calenderCurrentEvents);
-          // console.log('localevent - - =', localEvents);
 
           readers.map((reader, i) => {
             var todayDate = moment(new Date()).format('YYYY-MM-DD');
@@ -86,6 +117,8 @@ export default function HomeScreen({navigation}) {
             var currentReaderEvent = localEvents?.events?.find(
               obj => obj.readerName === reader.first_name,
             );
+
+            //If NO EVENT EXIST FOR THIS READER IN LOCAL STORAGE
             if (currentReaderEvent) {
               console.log(
                 'event of this reader found in storage:',
@@ -103,112 +136,39 @@ export default function HomeScreen({navigation}) {
                 //CHECK IF REMINDER TIME OF THIS READER UPDATED (FROM WEB)
                 if (currentReaderEvent.reminderTime != reader.reminder_time) {
                   //CREATE THIS READER EVENT IN CALENDER
-                  RNCalendarEvents.saveEvent(
-                    reader.first_name + ' Lets Read Book',
-                    {
-                      startDate: eventStartDate,
-                      endDate: eventEndDate,
-                      alarms: [
-                        {
-                          date: 5, //ALARM 5 MINUTE BRFORE TO START TIME
-                        },
-                      ],
-                    },
-                  ).then(eventId => {
+                  createEventInCalender(reader.first_name + ' Lets Read Book', eventStartDate, eventEndDate)
+                  .then(res=>{
                     //AND UPDATE LOCAL STORAGE DATA WITH NEW EVENT ID
-                    const index = localEvents?.events?.findIndex(
-                      obj => obj.readerName === reader.first_name,
-                    );
-                    localEvents.events.splice(index, 1); //Remove item of this index
-                    const temp = {
-                      reminderTime: reader.reminder_time,
-                      readerName: reader.first_name,
-                      createdAt: todayDate,
-                      eventId: eventId,
-                    };
-                    localEvents.events.push(temp);
-                    AsyncStorage.setItem(
-                      '@ReminderEvents',
-                      JSON.stringify(localEvents),
-                    );
-                    console.log(
-                      'updated event time of user bcz its updated from server : ',
-                      reader.first_name,
-                    );
-                  });
+                    removeEventFromLocalStorage(localEvents, reader.first_name)
+  
+                    createEventInLocalStorage(localEvents, res, todayDate, reader.reminder_time, reader.first_name)
+                  })
+                  .catch(error=>{console.log('error: ',error)})
                 }
               } else {
                 console.log(
                   'no event in calender for ',
                   currentReaderEvent.readerName,
                 );
-
                 //CREATE THIS READER EVENT IN CALENDER
-                RNCalendarEvents.saveEvent(
-                  reader.first_name + ' Lets Read Book',
-                  {
-                    startDate: eventStartDate,
-                    endDate: eventEndDate,
-                    alarms: [
-                      {
-                        date: 5, //ALARM 5 MINUTE BRFORE TO START TIME
-                      },
-                    ],
-                  },
-                ).then(eventId => {
+                createEventInCalender(reader.first_name + ' Lets Read Book', eventStartDate, eventEndDate)
+                .then(res=>{
                   //AND UPDATE LOCAL STORAGE DATA WITH NEW EVENT ID
-                  const index = localEvents?.events?.findIndex(
-                    obj => obj.readerName === reader.first_name,
-                  );
-                  localEvents.events.splice(index, 1); //Remove item of this index
-                  const temp = {
-                    reminderTime: reader.reminder_time,
-                    readerName: reader.first_name,
-                    createdAt: todayDate,
-                    eventId: eventId,
-                  };
-                  localEvents.events.push(temp);
-                  AsyncStorage.setItem(
-                    '@ReminderEvents',
-                    JSON.stringify(localEvents),
-                  );
-                  console.log('updated local storage with our new event id');
-                });
+                  removeEventFromLocalStorage(localEvents, reader.first_name)
+
+                  createEventInLocalStorage(localEvents, res, todayDate, reader.reminder_time, reader.first_name)
+                })
+                .catch(error=>{console.log('error: ',error)})
               }
             } else {
               console.log('event not found for reader=', reader.first_name);
-              //MEANS NO EVENT EXIST FOR THIS READER
               //CREATE AN EVENT
-              RNCalendarEvents.saveEvent(
-                reader.first_name + ' Lets Read Book',
-                {
-                  startDate: eventStartDate,
-                  endDate: eventEndDate,
-                  alarms: [
-                    {
-                      date: 5, //ALARM 5 MINUTE BRFORE TO START TIME
-                    },
-                  ],
-                },
-              ).then(eventId => {
-                console.log('new event id= ', eventId);
+              createEventInCalender(reader.first_name + ' Lets Read Book', eventStartDate, eventEndDate)
+              .then((res)=>{
                 //ADD NEW USER REMINDER TIME TO LOCAL STORAGE
-                if (!localEvents) {
-                  localEvents = {events: []};
-                }
-                const temp = {
-                  reminderTime: reader.reminder_time,
-                  readerName: reader.first_name,
-                  createdAt: todayDate,
-                  eventId: eventId,
-                };
-                localEvents.events.push(temp);
-                console.log('final data adding to local = ', localEvents);
-                AsyncStorage.setItem(
-                  '@ReminderEvents',
-                  JSON.stringify(localEvents),
-                );
-              });
+                createEventInLocalStorage(localEvents, res, todayDate, reader.reminder_time, reader.first_name)
+              })
+              .catch(error=>console.log('error event creation: ', error))
             }
           });
         }
@@ -229,11 +189,29 @@ export default function HomeScreen({navigation}) {
       .then(result => {
         setUserCredit(result);
         navigation.setOptions(
-          globalTitleBar(state.name, '', result.credits, navigation, true),
+          globalTitleBar(state.name.substring(0,1), '', result.credits, navigation, true),
         );
         setLoading(false);
       })
       .catch(error => console.log('credit error = ', error));
+  }
+  function fetchRecommendedBooks() {
+    const recommendedBookUrl = getBooksRecommendedForAll;
+    //API TO FETCH READERS
+    axios
+    .get(recommendedBookUrl)
+    .then(res=>res.data)
+    .then(response => {
+      setRecommendedBooks(response)
+      var tagArray = response
+
+      var randomIndex = Math.floor(Math.random() * (tagArray.length-10))
+      tagArray = tagArray.slice(randomIndex,randomIndex+10)
+      setPopularBooks(tagArray)
+  })
+    .catch(error => {
+      console.log('get recommended books error =', error);
+    });
   }
   useEffect(() => {
     setLoading(true);
@@ -243,6 +221,7 @@ export default function HomeScreen({navigation}) {
       .get(readersUrl)
       .then(response => {
         setReaders(response.data);
+        fetchRecommendedBooks()
         setTitleBar();
       })
       .catch(error => {
@@ -250,16 +229,23 @@ export default function HomeScreen({navigation}) {
       });
   }, [flagNewReader]);
 
+  function handleRecommendedBookClick(item) {
+    navigation.navigate('BookStartRead', {
+      currentBook: item,
+      currentReader: null,
+      haveReader: false
+    });
+  }
   const renderRecommendedBooks = (item, index) => {
     return (
-      <TouchableOpacity //onPress={e => handleBookClick(item)}
+      <TouchableOpacity onPress={e => handleRecommendedBookClick(item)}
       >
         <Card containerStyle={styleBookList.bookContainer}>
           <View style={styleBookList.cardImageContainer}>
             <Card.Image
               style={styleBookList.cardImage}
-              source={{uri: item.url}}
-              resizeMode="stretch"
+              source={item.thumbnail_image ? {uri: item.thumbnail_image} : require('../../assets/image_break_100.png')}
+              resizeMode={item.thumbnail_image ? "stretch" : "center"}
             />
           </View>
           <View style={styleBookList.cartTextContainer}>
@@ -275,7 +261,10 @@ export default function HomeScreen({navigation}) {
   };
 
   const handleReaderSelection = (e, reader) => {
-    navigation.navigate('Reader', reader);
+    navigation.navigate('Reader',{
+      refreshPage: false,
+      currentReader: reader,
+    });
   };
   const readersListView = readers.map((reader, i) => (
     <TouchableOpacity key={i} onPress={e => handleReaderSelection(e, reader)}>
@@ -328,36 +317,17 @@ export default function HomeScreen({navigation}) {
           console.log('event start --> ', eventStartDate);
           console.log('event end --> ', eventEndDate);
 
-          RNCalendarEvents.saveEvent(obj.firstname_reader + ' lets read Book', {
-            startDate: eventStartDate,
-            endDate: eventEndDate,
-            alarms: [
-              {
-                date: 5, //ALARM 5 MINUTE BRFORE TO START TIME
-              },
-            ],
-          }).then(eventId => {
-            console.log('new event id= ', eventId);
+          createEventInCalender(obj.firstname_reader + ' lets read Book', eventStartDate, eventEndDate)
+          .then((res)=>{
             //ADD NEW USER REMINDER TIME TO LOCAL STORAGE
             AsyncStorage.getItem('@ReminderEvents')
-              .then(eventData => {
-                var newEventData = eventData
-                  ? JSON.parse(eventData)
-                  : {events: []};
-                const temp = {
-                  reminderTime: obj.time_picker,
-                  readerName: obj.firstname_reader,
-                  createdAt: todayDate,
-                  eventId: eventId,
-                };
-                newEventData.events.push(temp);
-                // console.log('new event data final = ',newEventData);
-                AsyncStorage.setItem(
-                  '@ReminderEvents',
-                  JSON.stringify(newEventData),
-                );
-              })
-              .catch(error => console.log('storage error:', error));
+            .then(eventData => {
+              var newEventData = eventData
+                ? JSON.parse(eventData)
+                : {events: []};
+              createEventInLocalStorage(newEventData, res, todayDate, obj.time_picker, obj.firstname_reader)
+            })
+            .catch(error => console.log('storage error:', error));
           });
 
           return resolve(data.message.toString());
@@ -404,16 +374,16 @@ export default function HomeScreen({navigation}) {
         <View>
           <View style={styles2.popularBookHeading}>
             <Text style={globalStyle.subHeading}>Recommended Books</Text>
-            <View style={{alignItems: 'flex-end', flex: 1}}>
+            {/* <View style={{alignItems: 'flex-end', flex: 1}}>
               <Text style={[{fontSize: 14}, globalStyle.font]}>Show more</Text>
-            </View>
+            </View> */}
           </View>
 
           <View style={styles2.flatlistContainer}>
             <FlatList
               horizontal
               showsHorizontalScrollIndicator={false}
-              data={popularBooks}
+              data={recommendedBooks}
               renderItem={({item, index}) =>
                 renderRecommendedBooks(item, index)
               }
@@ -425,9 +395,9 @@ export default function HomeScreen({navigation}) {
         <View>
           <View style={styles2.popularBookHeading}>
             <Text style={globalStyle.subHeading}>Most Rated Books</Text>
-            <View style={{alignItems: 'flex-end', flex: 1}}>
+            {/* <View style={{alignItems: 'flex-end', flex: 1}}>
               <Text style={[{fontSize: 14}, globalStyle.font]}>Show more</Text>
-            </View>
+            </View> */}
           </View>
           <View style={styles2.flatlistContainer}>
             <FlatList

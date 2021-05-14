@@ -38,18 +38,29 @@ export default function ReaderPage({route, navigation}) {
   const state = value.state;
   const encodedUserId = base64.encode(state.userId.toString());
 
-  const currentReader = route.params;
+  const currentReader = route.params.currentReader;
   const encodedReaderId = base64.encode(currentReader.id.toString());
+  const refreshPage = route.params.refreshPage
   const [booksCurrentlyReading, setCurrentBooks] = useState([]);
   const [booksStoppedReading, setStoppedBooks] = useState([]);
   const [booksRecommended, setbooksRecommended] = useState([]);
   const [isLoading, setLoading] = useState(false);
+  {/*CURRENT BOOK SCROLL*/}
   const [scrollWidthCurrentBooks, setScrollWidthCurrentBooks] = useState(0);
   const [contentWidthCurrentBooks, setContentWidthCurrentBooks] = useState(0);
   const [scrollPercentCurrentBooks, setScrollPercentCurrentBooks] = useState(0);
   const [scrollElementWidthPercent, setPercentWidth] = useState(50);
-  // const [userCredit, setUserCredit] = useState(0);
+  {/*RECOMMENDED BOOK SCROLL*/}
+  const [scrollWidthRecommendedBooks, setScrollWidthRecommendedBooks] = useState(0);
+  const [contentWidthRecommendedBooks, setContentWidthRecommendedBooks] = useState(0);
+  const [scrollPercentRecommendedBooks, setScrollPercentRecommendedBooks] = useState(0);
+  {/*ALREADY READ BOOK SCROLL*/}
+  const [scrollWidthReadBooks, setScrollWidthReadBooks] = useState(0);
+  const [contentWidthReadooks, setContentWidthReadBooks] = useState(0);
+  const [scrollPercentReadBooks, setScrollPercentReadBooks] = useState(0);
 
+  // const [userCredit, setUserCredit] = useState(0);
+console.log('refresh page: ',refreshPage);
   var todayDate = moment(new Date()).format('YYYY-MM-DD');
   var tempTime = moment(todayDate + ' ' + currentReader.reminder_time);
   const [reminderTime, setReminderTime] = useState(new Date(tempTime));
@@ -65,7 +76,7 @@ export default function ReaderPage({route, navigation}) {
         // setUserCredit(result);
         navigation.setOptions(
           globalTitleBar(
-            state.name,
+            state.name.substring(0,1),
             currentReader.first_name + "'s Bookshelf",
             result.credits,
             navigation,
@@ -104,10 +115,10 @@ export default function ReaderPage({route, navigation}) {
       .catch(error => {
         console.log('getBooks url response error = ', error);
       });
-  }, []);
+  }, [refreshPage]);
 
   function handleBookClick(book) {
-    navigation.navigate('BookStatus', {
+    navigation.navigate('BookReading', {
       currentBook: book,
       currentReader: currentReader,
     });
@@ -119,12 +130,8 @@ export default function ReaderPage({route, navigation}) {
           <View style={styles.cardImageContainer}>
             <Card.Image
               style={styles.cardImage}
-              source={{
-                uri: item.thumbnail_image
-                  ? item.thumbnail_image
-                  : default_BookImage,
-              }}
-              resizeMode="stretch"
+              source={item.thumbnail_image ? {uri: item.thumbnail_image} : require('../../assets/image_break_100.png')}
+              resizeMode={item.thumbnail_image ? "stretch" : "center"}
             />
           </View>
           <View style={styles.cartTextContainer}>
@@ -145,13 +152,9 @@ export default function ReaderPage({route, navigation}) {
           <View style={styles.cardImageContainer}>
             <Card.Image
               style={styles.cardImage}
-              source={{
-                uri: item.thumbnail_image
-                  ? item.thumbnail_image
-                  : default_BookImage,
-              }}
-              resizeMode="stretch"
-            />
+              source={item.thumbnail_image ? {uri: item.thumbnail_image} : require('../../assets/image_break_100.png')}
+              resizeMode={item.thumbnail_image ? "stretch" : "center"}
+             />
           </View>
           <View style={styles.cartTextContainer}>
             <Text
@@ -165,9 +168,10 @@ export default function ReaderPage({route, navigation}) {
     );
   };
   function handleRecommendedBookClick(book) {
-    navigation.navigate('BookDescription', {
+    navigation.navigate('BookStartRead', {
       currentBook: book,
       currentReader: currentReader,
+      haveReader: true
     });
   }
   const renderRecommendedBooks = (item, index) => {
@@ -177,12 +181,8 @@ export default function ReaderPage({route, navigation}) {
           <View style={styles.cardImageContainer}>
             <Card.Image
               style={styles.cardImage}
-              source={{
-                uri: item.thumbnail_image
-                  ? item.thumbnail_image
-                  : default_BookImage,
-              }}
-              resizeMode="stretch"
+              source={item.thumbnail_image ? {uri: item.thumbnail_image} : require('../../assets/image_break_100.png')}
+              resizeMode={item.thumbnail_image ? "stretch" : "center"}
             />
           </View>
           <View style={styles.cartTextContainer}>
@@ -196,16 +196,13 @@ export default function ReaderPage({route, navigation}) {
       </TouchableOpacity>
     );
   };
+  function handleViewMoreClick() {
+    navigation.navigate('ViewAllBooks', {
+      bookType: 'recommended',
+      currentReader: currentReader
+    })
+  }
 
-  const handleScrollView = event => {
-    if (event) {
-      const scrollPerc =
-        (event.nativeEvent.contentOffset.x /
-          (contentWidthCurrentBooks - scrollWidthCurrentBooks)) *
-        (100 - scrollElementWidthPercent);
-      setScrollPercentCurrentBooks(scrollPerc);
-    }
-  };
   function updateReminderTime(e) {
     // console.log('update reminder time')
     RNCalendarEvents.requestPermissions((readOnly = false))
@@ -301,11 +298,50 @@ export default function ReaderPage({route, navigation}) {
         });
     }
   };
+  const handleScrollView = event => {
+    if (event) {
+      const scrollPerc =
+        (event.nativeEvent.contentOffset.x /
+          (contentWidthCurrentBooks - scrollWidthCurrentBooks)) *
+        (100 - scrollElementWidthPercent);
+      setScrollPercentCurrentBooks(scrollPerc);
+    }
+  };
+  const handleRecommendedScrollView = event => {
+    if (event) {
+      const scrollPerc =
+        (event.nativeEvent.contentOffset.x /
+          (contentWidthRecommendedBooks - scrollWidthRecommendedBooks)) *
+        (100 - scrollElementWidthPercent);
+      setScrollPercentRecommendedBooks(scrollPerc);
+    }
+  };
+  const handleReadScrollView = event => {
+    if (event) {
+      const scrollPerc =
+        (event.nativeEvent.contentOffset.x /
+          (contentWidthReadooks - scrollWidthReadBooks)) *
+        (100 - scrollElementWidthPercent);
+      setScrollPercentReadBooks(scrollPerc);
+    }
+  };
   const setScrollViewWidth = e => {
     if (e) setScrollWidthCurrentBooks(e.nativeEvent.layout.width);
   };
   const setContentSize = width => {
     if (width) setContentWidthCurrentBooks(width);
+  };
+  const setRecommendedScrollViewWidth = e => {
+    if (e) setScrollWidthRecommendedBooks(e.nativeEvent.layout.width);
+  };
+  const setRecommendedContentSize = width => {
+    if (width) setContentWidthRecommendedBooks(width);
+  };
+  const setReadScrollViewWidth = e => {
+    if (e) setScrollWidthReadBooks(e.nativeEvent.layout.width);
+  };
+  const setReadContentSize = width => {
+    if (width) setContentWidthReadBooks(width);
   };
 
   return isLoading ? (
@@ -319,10 +355,10 @@ export default function ReaderPage({route, navigation}) {
       color={primary}
     />
   ) : (
-    <ScrollView>
+    <ScrollView style={{backgroundColor:white}}>
       <SafeAreaView style={styles.parentContainer}>
         {/* REMINDER */}
-        <View style={styles.heading}>
+        <View style={[styles.heading,{marginTop:0}]}>
           <Text style={globalStyle.subHeading}>Daily Reminder</Text>
           <Chip style={{margin: 10, backgroundColor: primary}}>
             {moment(reminderTime).format('hh:mm a')}
@@ -364,31 +400,63 @@ export default function ReaderPage({route, navigation}) {
         {/* BOOK SUGGESTIONS */}
         <View style={styles.heading}>
           <Text style={globalStyle.subHeading}>Recommended books</Text>
-          <View style={{alignItems: 'flex-end', flex: 1}}>
+          <TouchableOpacity style={{alignItems: 'flex-end', flex: 1}} onPress={e=>{handleViewMoreClick()}}>
             <Text style={[{fontSize: 14}, globalStyle.font]}>Show more</Text>
-          </View>
+          </TouchableOpacity>
         </View>
         <View style={styles.flatlistContainer}>
+          {scrollPercentRecommendedBooks > 10 ? (
+              <View style={styles.scrollIconLeft}>
+                <Icon name="left" size={14} color={darkGray}></Icon>
+              </View>
+            ) : null}
           <FlatList
             horizontal
             showsHorizontalScrollIndicator={false}
             data={booksRecommended}
             renderItem={({item, index}) => renderRecommendedBooks(item, index)}
             keyExtractor={(item, index) => index}
-            key={item => item}></FlatList>
+            key={item => item}
+            onScroll={e => handleRecommendedScrollView(e)}
+            onLayout={ew => setRecommendedScrollViewWidth(ew)}
+            onContentSizeChange={(width, _) => {
+              setRecommendedContentSize(width);
+            }}
+            ></FlatList>
+            {scrollPercentRecommendedBooks < scrollElementWidthPercent - 10 ? (
+              <View style={styles.scrollIconLeft}>
+                <Icon name="right" size={14} color={darkGray}></Icon>
+              </View>
+            ) : null}
         </View>
         {/* BOOKS READ */}
         <View style={styles.heading}>
           <Text style={globalStyle.subHeading}>Books Read</Text>
         </View>
         <View style={styles.flatlistContainer}>
+        {scrollPercentReadBooks > 10 ? (
+              <View style={styles.scrollIconLeft}>
+                <Icon name="left" size={14} color={darkGray}></Icon>
+              </View>
+            ) : null}
           <FlatList
             horizontal
             showsHorizontalScrollIndicator={false}
             data={booksStoppedReading}
             renderItem={({item, index}) => renderAlreadyReadBooks(item, index)}
             keyExtractor={(item, index) => index}
-            key={item => item}></FlatList>
+            key={item => item}
+            onScroll={e => handleReadScrollView(e)}
+            onLayout={ew => setReadScrollViewWidth(ew)}
+            onContentSizeChange={(width, _) => {
+              setReadContentSize(width);
+            }}
+            ></FlatList>
+            {scrollPercentReadBooks < scrollElementWidthPercent - 10 ? (
+              <View style={styles.scrollIconLeft}>
+                <Icon name="right" size={14} color={darkGray}></Icon>
+              </View>
+            ) : null}
         </View>
 
         {showTimer ? (

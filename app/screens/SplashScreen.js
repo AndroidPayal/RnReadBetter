@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logo: {
-    width: '70%',
-    height: '50%',
+    width: '50%',
+    height: '30%',
   },
 });

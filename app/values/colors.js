@@ -1,6 +1,6 @@
 export const primary = '#F5A500';
-export const secondary = '#24a0ed';
-export const secondaryLight = '#bed19a';
+export const secondary = '#59E2DF';
+export const secondaryLight = '#f8f8f8';
 
 export const lightGray = '#e0e0e0';
 export const darkGray = '#a9a9a9';

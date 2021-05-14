@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button, Text, Overlay, Input } from 'react-native-elements';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, ToastAndroid } from 'react-native';
 import { Picker } from "@react-native-picker/picker";
 import Stepper from 'react-native-stepper-ui';
 import Icon from 'react-native-vector-icons/AntDesign';
@@ -8,10 +8,11 @@ import Icon2 from 'react-native-vector-icons/Ionicons';
 import { RadioButton } from 'react-native-paper';
 import Datetimepicker from '@react-native-community/datetimepicker';
 import moment from "moment";
+import axios from 'axios'
 
-import { darkGray, lightGray, primary, red, white } from '../../values/colors';
-import { ToastAndroid } from 'react-native';
+import { darkGray, lightGray, primary, red, secondaryLight, white } from '../../values/colors';
 import { globalStyle } from '../../values/constants';
+import { fetchSchoolUrl } from "../../values/config";
 
 export default class AddReader extends React.Component {
   constructor(props) {
@@ -35,7 +36,11 @@ export default class AddReader extends React.Component {
       graArray: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'],
       lexelLevel: 0,
       lexelArray: [25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300, 325, 350, 375, 400, 425, 450, 475, 500, 525, 550, 575, 600, 625, 650, 675, 700, 725, 750, 775, 800, 825, 850, 875, 900, 925, 950, 975, 1000, 1025, 1050, 1075, 1100, 1125, 1150, 1175, 1200, 1225, 1250, 1275, 1300],
-      errorField:''
+      errorField:'',
+      pincode:'',
+      schoolName:'',
+      schoolList:[{name: 'Select school'}, {name: 'Add new school'}],
+      selectedSchool:0
     };
   }
   /*
@@ -54,8 +59,9 @@ export default class AddReader extends React.Component {
       activePage: value,
     });
   };
+  
   handleAddNewReader = e => {
-    const { firstName, lastName, gender, dob, reminderTime, grade, school, draLevel, graLevel, lexelLevel } = this.state;
+    const { firstName, lastName, gender, dob, reminderTime, grade, school, draLevel, graLevel, lexelLevel, pincode, selectedSchool, schoolName, schoolList } = this.state;
     const formated_dob = moment(dob).format('YYYY-MM-DD')
     const formated_time = moment(reminderTime).format('HH:mm:ss')
     const obj = {
@@ -81,10 +87,15 @@ export default class AddReader extends React.Component {
         errorField: 'lastName',
         activePage:0
       })
+    }else if(pincode.length != 6 || ((selectedSchool===0 || selectedSchool === schoolList.length-1) && schoolName.length<3)){
+      this.setState({
+        errorField: 'pincode',
+        activePage:1
+      })
     }else{
+      console.log(' everythig perfect');
       this.props.addNewReader(obj)
       .then((response) => {
-        console.log('add reader promise res = ', response);
         ToastAndroid.show(response, ToastAndroid.SHORT)
         try {
           this.deleteStateValues()
@@ -117,11 +128,45 @@ export default class AddReader extends React.Component {
       lexelLevel: 25,
     })
   }
+  fetchSchoolsData = (data) => {
+    const schoolUrl = fetchSchoolUrl + '/' + data;
+    //API TO FETCH READERS
+    axios
+      .get(schoolUrl)
+      .then(res=>res.data)
+      .then(response => {
+        //UPDATE SCHOOLLIST WITH NEW ARRAY
+        var formatedArray = response
+        formatedArray.splice(0, 0, {name: 'Select school'})
+        formatedArray.splice(response.length, 0, {name: 'Add new school'})
+        // console.log('formated array = ', formatedArray);
+        this.setState({
+          schoolList: formatedArray
+        })
+      })
+      .catch(error => {
+        console.log('get school error =', error);
+      });
+  }
   updateStateValue = (fieldName, value) => {
-    console.log('updating ', fieldName, ' val=', value);
+    // console.log('updating ', fieldName, ' val=', value);
     this.setState({
       [fieldName]: value,
     });
+
+    if(fieldName === 'pincode'){
+      if(value.length === 6){
+        //FETCH SCHOOLS OF THIS PINCODE
+        console.log('fetching schools of this pincode');
+        this.fetchSchoolsData(value)
+      }
+    }
+    if(fieldName === 'selectedSchool'){
+      if(value != this.state.schoolList.length-1){
+        //SELECTED OTHER ELEMENT THEN ADD NEW SCHOOL FROM LIST
+        this.setState({ schoolName: '' })
+      }
+    }
   };
   onDOBChange = (event, date) => {
     console.log('changed date', date ? date : this.state.dob);
@@ -309,6 +354,10 @@ const StepperPage2 = props => {
   let gradeItems = props.states.gradeArray.map((s, i) => {
     return <Picker.Item key={i} value={i} label={s} />;
   });
+  let schoolItems = props.states.schoolList.map((s, i) => {
+    return <Picker.Item key={i} value={i} label={s.name} />;
+  });
+
   return (
     <View style={stylesSteppers.parentContainer}>
       <View style={stylesSteppers.headingContainer}>
@@ -328,9 +377,54 @@ const StepperPage2 = props => {
       </View>
 
       <View style={stylesSteppers.headingContainer}>
+        <Text style={globalStyle.font}>Select school details</Text>
+        <Text style={{ color: red }}>{' *'}</Text>
+      </View>
+      <View style={{backgroundColor:secondaryLight, padding:5}}>
+        <Input
+          placeholder='School pincode'
+          onChangeText={value => props.updateStateValue('pincode', value)}
+          value={props.states.pincode}
+          keyboardType='number-pad'
+          maxLength={6}
+          errorMessage={props.states.errorField==='pincode' ? 'Fill school details!' : ''}
+        />
+        {props.states.pincode.length === 6 ?
+        <View>
+            <View style={[stylesSteppers.dateTimeContainer, {width:'95%', alignSelf:'center'}]}>
+              <Picker
+                selectedValue={props.states.selectedSchool}
+                style={[{ height: '100%', width: '100%' }]}
+                mode="dropdown"
+                onValueChange={(itemValue, itemIndex) =>
+                  props.updateStateValue('selectedSchool', itemValue)
+                }>
+                {schoolItems}
+              </Picker>
+            </View>
+            {props.states.selectedSchool === props.states.schoolList.length-1 ? 
+              <Input
+                placeholder='Add school name'
+                onChangeText={value => props.updateStateValue('schoolName', value)}
+                value={props.states.schoolName}
+                // errorMessage={props.states.errorField==='pincode' ? 'Please !' : ''}
+              />
+            :null}
+        </View>
+        :null}
+      </View>
+
+
+      <View style={stylesSteppers.headingContainer}>
         <Text style={globalStyle.font}>Reminder Time</Text>
         <Text style={{ color: red }}>{' *'}</Text>
       </View>
+      <View >
+        <Text style={[globalStyle.font,{opacity:0.60}]}>
+          Choose your daily reminder time to read books
+        </Text>
+      </View>
+      
       {!props.states.showTimePicker ? (
         <View>
           <View style={stylesSteppers.dateTimeContainer}>
@@ -354,10 +448,10 @@ const StepperPage2 = props => {
           mode="time"
           onChange={props.onChange}
           is24Hour={false} //SETTING THIS TRUE REMOVED AM/PM OPTION FROM PICKER
-
         // dateFormat="day month year"//FORMAT ADJUST FROM MOMENT.JS
         />
       )}
+
     </View>
   );
 };
@@ -446,5 +540,5 @@ const stylesSteppers = StyleSheet.create({
   dateTimeIcon: { margin: 5 },
   dateTimeText: { flex: 1, textAlign: 'center', fontSize:17 },
   parentContainer: { marginTop: 40 },
-  headingContainer: { flexDirection: 'row', marginStart: 10, marginTop: 15 },
+  headingContainer: { flexDirection: 'row', marginTop: 15 },
 });
