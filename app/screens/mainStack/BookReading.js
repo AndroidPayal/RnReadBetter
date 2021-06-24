@@ -7,33 +7,45 @@ import {
   ActivityIndicator,
   FlatList,
   ScrollView,
-  ToastAndroid
 } from 'react-native';
-import {Text, BottomSheet, Button, Input, Overlay,Card,Rating} from 'react-native-elements';
+import Toast from 'react-native-simple-toast';
+import {
+  Text,
+  BottomSheet,
+  Button,
+  Input,
+  Overlay,
+  Card,
+  Rating,
+} from 'react-native-elements';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import Icon1 from 'react-native-vector-icons/MaterialCommunityIcons';
+import Icon3 from 'react-native-vector-icons/Ionicons';
+
 import axios from 'axios';
 import base64 from 'react-native-base64';
-
 import {
+  fourthGreen,
   white,
   lightGray,
   tintBackground,
-  tintDarkBackground,
   black,
   red,
   green,
   logBackground,
   primary,
+  darkGray,
+  secondary,
 } from '../../values/colors';
 import {
   getLogsOfABook,
   addLogToABook,
   getUserCredit,
   stopBookReadingUrl,
+  voteApi,
 } from '../../values/config';
 import {Context as AuthContext} from '../../hoc/AuthContext';
 import {globalStyle, globalTitleBar} from '../../values/constants';
-import {default_BookImage} from '../../values/config'
 
 export default function BookReading({route, navigation}) {
   const currentBook = route.params.currentBook;
@@ -42,7 +54,7 @@ export default function BookReading({route, navigation}) {
   const encodedBookId = base64.encode(currentBook.id.toString());
   const {value} = useContext(AuthContext);
   const state = value.state;
-  const encodedUserId = base64.encode(state.userId.toString());
+  const encodedUserId = base64.encode(state.id.toString());
 
   const [logs, setlogs] = useState([]);
   const [isBottomSheetVisible, setbottomSheetVisible] = useState(false);
@@ -53,35 +65,28 @@ export default function BookReading({route, navigation}) {
   const [summary, setSummary] = useState('');
   const [flagAddLog, setFlagAddLog] = useState(false);
   // const [userCredit, setUserCredit] = useState(0);
-  const [countPagesRead, setPagesRead] = useState(0)
-  const [countMinutesRead, setMinutesRead] = useState(0)
+  const [countPagesRead, setPagesRead] = useState(0);
+  const [countMinutesRead, setMinutesRead] = useState(0);
   const [flagStopBook, setFlagStopBookOverlay] = useState(false);
   const [stopReadingComment, setStopReadingComment] = useState('');
   const [disableStopButton, setdisableStopButton] = useState(false);
   const [rateFunFactor, setFunFactor] = useState(2);
   const [rateComFactor, setComFactor] = useState(2);
-  const [stopReadingType, setStopReadingType] = useState('stop')
+  const [stopReadingType, setStopReadingType] = useState('stop');
+  const [isOverlayActionLoading, setOverlayActionLoading] = useState(false);
+  const [likeDislikeStatus, setlikeDislikeStatus] = useState(null);
 
   function setTitleBar() {
-    const creditUrl = getUserCredit + '/' + encodedUserId;
-    //API TO FETCH User Credit
-    axios
-      .get(creditUrl)
-      .then(response2 => response2.data)
-      .then(result => {
-        // setUserCredit(result);
-        navigation.setOptions(
-          globalTitleBar(
-            state.name.substring(0,1),
-            currentReader.first_name + "'s Bookshelf",
-            result.credits,
-            navigation,
-            false,
-          ),
-        );
-        setLoading(false);
-      })
-      .catch(error => console.log('credit error = ', error));
+    navigation.setOptions(
+      globalTitleBar(
+        state.name.substring(0, 1),
+        currentReader.first_name + "'s Bookshelf",
+        null, //result.credits,
+        navigation,
+        false,
+      ),
+    );
+    setLoading(false);
   }
   useEffect(() => {
     setLoading(true);
@@ -94,21 +99,26 @@ export default function BookReading({route, navigation}) {
       .then(data => {
         setlogs(data.datas);
         setTitleBar();
-        console.log(currentBook);
-        var formatedArray = data.datas
-        formatedArray.splice(0, 0, {log_message: 'Started the book on 23 april 2021'})
+        var formatedArray = data.datas;
+        formatedArray.splice(0, 0, {
+          log_message: 'Started the book on 23 april 2021',
+        });
 
-        var tempPageCount = 0
-        var tempMinuteCount = 0
-        data.datas.map((item,i)=>{
-          tempPageCount = tempPageCount + item.no_of_pages_read;
-          tempMinuteCount = tempMinuteCount + item.reading_time;
-        })
-        setPagesRead(tempPageCount)
-        setMinutesRead(tempMinuteCount)
+        var tempPageCount = 0;
+        var tempMinuteCount = 0;
+        data.datas.map((item, i) => {
+          tempPageCount =
+            tempPageCount + item.no_of_pages_read ? item.no_of_pages_read : 0;
+          tempMinuteCount =
+            tempMinuteCount + item.reading_time ? item.reading_time : 0;
+        });
+        setPagesRead(tempPageCount);
+        setMinutesRead(tempMinuteCount);
       })
       .catch(error => {
         console.log('fetch log response error = ', error);
+        Toast.show("Server Error! can't fetch logs");
+        setLoading(false);
       });
   }, [flagAddLog]);
 
@@ -122,8 +132,7 @@ export default function BookReading({route, navigation}) {
             style={{
               width: 10,
               height: 10,
-              backgroundColor:
-                index === logs.length - 1 ? red : tintDarkBackground,
+              backgroundColor: index === logs.length - 1 ? red : primary,
               borderRadius: 10 / 2,
               margin: 2,
             }}
@@ -139,27 +148,31 @@ export default function BookReading({route, navigation}) {
             padding: 5,
             margin: 5,
           }}>
-          <Text style={[logStyle.commentText, index===0 ? globalStyle.fontBold : globalStyle.font]}>
+          <Text
+            style={[
+              logStyle.commentText,
+              index === 0 ? globalStyle.fontBold : globalStyle.font,
+            ]}>
             {item.log_message}
           </Text>
           <View style={logStyle.commentStatusContainer}>
-            {item?.reading_time ? 
+            {item?.reading_time ? (
               <View style={logStyle.readTimeContainer}>
                 <View style={logStyle.commentStatusDot} />
                 <Text style={[globalStyle.font]}>
                   {item.reading_time + ' mins Read'}
                 </Text>
               </View>
-            :null}
-            
-            {item?.from_page ?
+            ) : null}
+
+            {item?.from_page ? (
               <View style={logStyle.readTimeContainer}>
                 <View style={logStyle.commentStatusDot} />
                 <Text style={globalStyle.font}>
                   {'Pages ' + item.from_page + ' to ' + item.no_of_pages_read}
                 </Text>
               </View>
-            :null}
+            ) : null}
           </View>
         </View>
       </View>
@@ -170,9 +183,7 @@ export default function BookReading({route, navigation}) {
       <View style={addLogStyle.parent}>
         <View style={addLogStyle.headingContainer}>
           <View style={addLogStyle.headingText}>
-            <Text style={[{fontSize: 22}, globalStyle.fontMedium]}>
-              Add Your reading Log
-            </Text>
+            <Text style={[globalStyle.subHeading]}>Add reading log</Text>
           </View>
           <TouchableOpacity
             style={addLogStyle.closeIcon}
@@ -185,6 +196,8 @@ export default function BookReading({route, navigation}) {
             <Text style={[addLogStyle.inputHeading, globalStyle.font]}>
               Read for (minutes):
             </Text>
+            {/* </View>
+          <View style={addLogStyle.inputContainer}> */}
             <View style={addLogStyle.inputView}>
               <Input
                 inputContainerStyle={addLogStyle.inputStyle}
@@ -212,35 +225,39 @@ export default function BookReading({route, navigation}) {
             <View style={addLogStyle.inputView}>
               <Input
                 inputContainerStyle={addLogStyle.inputStyle}
+                inputStyle={{color: black}}
                 onChangeText={value => setStopPage(value)}
                 keyboardType="number-pad"
               />
             </View>
           </View>
-          <View style={addLogStyle.inputContainer}>
-            <Text style={[addLogStyle.inputHeading, globalStyle.font]}>
-              Describe what you read:
-            </Text>
+          <View style={{flexDirection: 'row', margin: 3}}>
             <View
               style={{
-                height: 90,
+                height: 250,
                 backgroundColor: lightGray,
                 borderRadius: 3,
                 flex: 1,
               }}>
               <Input
+                placeholder="Describe in your own words (3-5 sentences) what you read today. Write the story as you understood it during this reading session."
                 inputStyle={globalStyle.font}
-                inputContainerStyle={{borderBottomWidth: 0, height: 90}}
                 onChangeText={value => setSummary(value)}
+                inputContainerStyle={{borderBottomWidth: 0, maxHeight: 250}}
                 multiline={true}
-                placeholder='Tell us what you understood in this reading session.'
-              />
+                numberOfLines={9}></Input>
             </View>
           </View>
         </View>
         <View style={addLogStyle.buttonContainer}>
           <Button
             raised
+            icon={
+              <Icon
+                name="pencil"
+                size={17}
+                style={{marginHorizontal: 5}}></Icon>
+            }
             buttonStyle={{backgroundColor: tintBackground}}
             titleStyle={[{color: black}, globalStyle.fontBold]}
             title="Add Log"
@@ -265,12 +282,12 @@ export default function BookReading({route, navigation}) {
       .post(addLogToABook, obj)
       .then(response => response.data)
       .then(data => {
-        // console.log('add log response = ', data);
         // setLoading(false); //NO NEED BCZ FLAG UPDATE WILL CALL USEEFFECT->USEEFFECT WILL UPDATE LOADER
         setFlagAddLog(!flagAddLog);
       })
       .catch(error => {
         console.log('addLog url response error = ', error);
+        Toast.show("Server Error! can't add logs");
       });
     closeAddLog(e);
   }
@@ -280,46 +297,53 @@ export default function BookReading({route, navigation}) {
   function updateBookOverlay() {
     setFlagStopBookOverlay(false);
     setStopReadingComment('');
-    setFunFactor(2)
-    setComFactor(2)
+    setFunFactor(2);
+    setComFactor(2);
   }
   function openStopBookOverlay(stoptype) {
-    if(stoptype==='stop'){
-      setStopReadingType('stop')
-    }else{
-      setStopReadingType('finish')
+    if (stoptype === 'stop') {
+      setStopReadingType('stop');
+    } else {
+      setStopReadingType('finish');
     }
-    setFlagStopBookOverlay(true)
+    setFlagStopBookOverlay(true);
   }
   function handleStopReading(e) {
+    setOverlayActionLoading(true);
     const stopFinishBookUrl =
-      stopBookReadingUrl + '/' 
-      + encodedReaderId + (stopReadingType==='stop'? '/stop/reading/book/' : '/finish/reading/book/' )+
+      stopBookReadingUrl +
+      '/' +
+      encodedReaderId +
+      (stopReadingType === 'stop'
+        ? '/stop/reading/book/'
+        : '/finish/reading/book/') +
       base64.encode(currentBook.id.toString());
 
-      const updatedComFactor = rateComFactor === 1 ? 2 :( rateComFactor === 2 ? 4 : 6)
-      const obj = {
-        _token: state.token,
-        fun_factor: rateFunFactor,
-        com_factor: updatedComFactor
-      };
-      if (stopReadingComment != '') {
-        obj.book_comment = stopReadingComment;
-      }
-      //HIT API TO START BOOK READING
-      axios
+    const updatedComFactor =
+      rateComFactor === 1 ? 2 : rateComFactor === 2 ? 4 : 6;
+    const obj = {
+      _token: state.token,
+      fun_factor: rateFunFactor,
+      com_factor: updatedComFactor,
+    };
+    if (stopReadingComment != '') {
+      obj.book_comment = stopReadingComment;
+    }
+    //HIT API TO START BOOK READING
+    axios
       .post(stopFinishBookUrl, obj)
       .then(response => response.data)
       .then(data => {
         console.log(data);
         setdisableStopButton(true);
+        setOverlayActionLoading(false);
         setFlagStopBookOverlay(false);
-        ToastAndroid.show(data.message, ToastAndroid.SHORT);
-        navigateBackScreen()
+        Toast.show(data.message);
+        navigateBackScreen();
       })
       .catch(error => {
         setFlagStopBookOverlay(false);
-        ToastAndroid.show(error, ToastAndroid.SHORT);
+        Toast.show(error);
         console.log('getBooks recommended response error = ', error);
       });
   }
@@ -333,96 +357,174 @@ export default function BookReading({route, navigation}) {
     setbottomSheetVisible(false);
   }
   function handleHeartRateUpdate(rating) {
-    setComFactor(rating)
+    setComFactor(rating);
   }
   function handleStarRateUpdate(rating) {
-    setFunFactor(rating)
+    setFunFactor(rating);
   }
-
-  const headerRender = () => {
+  const headerBookBox = () => {
     return (
-      <>
-        <View style={styles.tintBox}>
+      <View style={{flexDirection: 'row'}}>
+        <View style={styles.bookImageParent}>
+          <Image
+            style={styles.bookImage}
+            source={
+              currentBook.thumbnail_image
+                ? {uri: currentBook.thumbnail_image}
+                : require('../../assets/image_break.png')
+            }
+            resizeMode={'stretch'}></Image>
+        </View>
+        <View style={{padding: 5, flex: 1}}>
           <View style={{flexDirection: 'row'}}>
-            <View style={styles.bookImageParent}>
-              <Image
-                style={styles.bookImage}
-                source={currentBook.thumbnail_image ? {uri: currentBook.thumbnail_image} : require('../../assets/image_break_100.png')}
-                resizeMode={currentBook.thumbnail_image ? "stretch" : "center"}
-                //'https://picsum.photos/700'}}//
-                ></Image>
+            <View style={{flex: 1}}>
+              <Text
+                style={[{fontSize: 15}, globalStyle.fontMedium]}
+                numberOfLines={3}>
+                {currentBook.name}
+              </Text>
             </View>
-            <View style={{padding: 5, flex: 1}}>
-              <View>
-                <Text
-                  style={[
-                    {fontSize: 10, color: tintDarkBackground},
-                    globalStyle.font,
-                  ]}>
-                  Currently Reading
+          </View>
+          <View style={{flexDirection: 'row', flex: 1}}>
+            {currentBook.like ? (
+              <View style={{flex: 1, justifyContent: 'flex-end'}}>
+                <Text style={[{color: black, opacity: 0.6}, globalStyle.font]}>
+                  Book rating:
                 </Text>
-                <Text
-                  style={[{fontSize: 15}, globalStyle.fontMedium]}
-                  numberOfLines={3}>
-                  {currentBook.name}
+                <Text style={[globalStyle.fontMedium]}>
+                  {currentBook.like ? currentBook.like : 0}
                 </Text>
               </View>
-              <View style={{flexDirection: 'row', flex: 1}}>
-                <View style={{flex: 1, justifyContent: 'flex-end'}}>
-                  <Text
-                    style={[{color: black, opacity: 0.6}, globalStyle.font]}>
-                    Total mins read:
-                  </Text>
-                  <Text style={[globalStyle.fontMedium]}>
-                    {countMinutesRead + ' mins'}
-                    {/* {currentBook.read_count + ' mins'} */}
-                  </Text>
-                </View>
-                <View style={{flex: 1, justifyContent: 'flex-end'}}>
-                  <Text
-                    style={[{color: black, opacity: 0.6}, globalStyle.font]}>
-                    Total pages read:
-                  </Text>
-                  <Text style={[globalStyle.fontMedium]}>
-                    {countPagesRead}
-                    {/* {currentBook.recommended} */}
-                  </Text>
-                </View>
-              </View>
+            ) : null}
+            <View style={{flex: 1, justifyContent: 'flex-end'}}>
+              <Text style={[{color: black, opacity: 0.6}, globalStyle.font]}>
+                Total pages:
+              </Text>
+              <Text style={[globalStyle.fontMedium]}>{currentBook.pages}</Text>
+            </View>
+          </View>
+          <View style={{margin: 10}}>
+            <View style={{flexDirection: 'row'}}>
+              <TouchableOpacity
+                style={{flex: 1}}
+                onPress={() => handleVotes(1)}>
+                <Icon3
+                  name="caret-up-circle"
+                  size={24}
+                  color={likeDislikeStatus === 'like' ? fourthGreen : black}
+                />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={{flex: 1}}
+                onPress={() => handleVotes(0)}>
+                <Icon3
+                  name="md-caret-down-circle"
+                  size={24}
+                  color={likeDislikeStatus === 'dislike' ? red : black}
+                />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={{flex: 1, alignItems: 'center'}}
+                onPress={() => handleHumanVotes()}>
+                <Icon1 name="human-male-male" size={24}></Icon1>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
+      </View>
+    );
+  };
+  const handleVotes = voteType => {
+    if (voteType === 0) {
+      setlikeDislikeStatus('dislike');
+    } else {
+      setlikeDislikeStatus('like');
+    }
+    // VOTE TYPE = 0 FOR DISLIKE AND 1 FOR LIKE
+    const obj = {
+      book_id: currentBook.id,
+      vote_type: voteType,
+      _token: state.token,
+    };
+    //API TO FETCH READERS
+    axios
+      .post(voteApi, obj)
+      .then(res => res.data)
+      .then(response => {
+        // console.log('res = ',response);
+        if (response.status === 'success') {
+          if (voteType === 0) {
+            Toast.show('You down voted this book');
+          } else {
+            Toast.show('You up voted this book');
+          }
+        }
+      })
+      .catch(error => {
+        setlikeDislikeStatus(null);
+        console.log('error handling votes =', error);
+        Toast.show('Server Error!');
+      });
+  };
+  const headerRender = () => {
+    return (
+      <>
+        <View style={styles.tintBox}>{headerBookBox()}</View>
 
         <View style={styles.buttonContainer}>
-          <View style={styles.buttonStyle}>
+          <View style={{margin: 10}}>
             <Button
-              buttonStyle={{borderColor: black, opacity:0.20}}
-              titleStyle={[{color: black, opacity:0.90}, globalStyle.fontBold]}
-              title="Stop Reading"
-              type="outline"
+              icon={
+                <Icon
+                  name="check-circle-o"
+                  size={17}
+                  style={{marginHorizontal: 5}}
+                  color={white}></Icon>
+              }
+              buttonStyle={{backgroundColor: darkGray}}
+              titleStyle={[{color: white, opacity: 0.9}, globalStyle.fontBold]}
+              title="Stop"
               disabled={disableStopButton}
               onPress={e => openStopBookOverlay('stop')}></Button>
+          </View>
+          <View style={{margin: 10}}>
+            <Button
+              icon={
+                <Icon
+                  name="stop-circle-o"
+                  size={17}
+                  style={{marginHorizontal: 5}}
+                  color={white}></Icon>
+              }
+              buttonStyle={{backgroundColor: darkGray}}
+              titleStyle={[{color: white, opacity: 0.9}, globalStyle.fontBold]}
+              title="Finish"
+              type="outline"
+              disabled={disableStopButton}
+              onPress={e => openStopBookOverlay('finish')}></Button>
           </View>
           <View style={styles.buttonStyle}>
             <Button
               raised
+              icon={
+                <Icon
+                  name="pencil"
+                  size={17}
+                  style={{marginHorizontal: 5}}></Icon>
+              }
               buttonStyle={{backgroundColor: primary}}
               titleStyle={[{color: black}, globalStyle.fontBold]}
               title="Add Log"
               onPress={e => handleAddLog(e)}></Button>
           </View>
         </View>
-        <View style={styles.buttonStyle}>
-          <Button
-            buttonStyle={{borderColor: black, opacity:0.20}}
-            titleStyle={[{color: black, opacity:0.90}, globalStyle.fontBold]}
-            title="Finish the book"
-            type="outline"
-            disabled={disableStopButton}
-            onPress={e => openStopBookOverlay('finish')}></Button>
-        </View>
+
         <View>
-          <Text style={[{margin: 10}, globalStyle.subHeading]}>Past Logs</Text>
+          <Text style={[{margin: 10}, globalStyle.subHeading]}>
+            Reading logs for this book
+          </Text>
         </View>
       </>
     );
@@ -433,7 +535,7 @@ export default function BookReading({route, navigation}) {
       style={{
         flex: 1,
         justifyContent: 'center',
-        backgroundColor: white
+        backgroundColor: white,
       }}
       size="large"
       color={primary}
@@ -450,17 +552,18 @@ export default function BookReading({route, navigation}) {
       <BottomSheet isVisible={isBottomSheetVisible}>{addLogBox()}</BottomSheet>
 
       <StopBookOverlay
-          selectedBook={currentBook}
-          flagStopBook={flagStopBook}
-          rateFunFactor={rateFunFactor}
-          rateComFactor={rateComFactor}
-          stopReadingType={stopReadingType}
-          updateBookOverlay={updateBookOverlay}
-          setStopReadingComment={setStopReadingComment}
-          handleStopReading={handleStopReading}
-          handleHeartRateUpdate={handleHeartRateUpdate}
-          handleStarRateUpdate={handleStarRateUpdate}
-        />
+        selectedBook={currentBook}
+        flagStopBook={flagStopBook}
+        rateFunFactor={rateFunFactor}
+        rateComFactor={rateComFactor}
+        stopReadingType={stopReadingType}
+        isOverlayActionLoading={isOverlayActionLoading}
+        updateBookOverlay={updateBookOverlay}
+        setStopReadingComment={setStopReadingComment}
+        handleStopReading={handleStopReading}
+        handleHeartRateUpdate={handleHeartRateUpdate}
+        handleStarRateUpdate={handleStarRateUpdate}
+      />
     </View>
   );
 }
@@ -474,8 +577,10 @@ const StopBookOverlay = props => {
       <ScrollView>
         <View style={styleBookOverlay.parentContainer2}>
           <View style={styleBookOverlay.headingContainer}>
-            <Text style={[styleBookOverlay.heading, globalStyle.fontMedium]}>
-              {props.stopReadingType==='stop' ? 'Stop Reading' : 'Finish Reading'}
+            <Text style={[styleBookOverlay.heading, globalStyle.subHeading]}>
+              {props.stopReadingType === 'stop'
+                ? 'Stop Reading'
+                : 'Finish Reading'}
             </Text>
             <Icon
               name="close"
@@ -486,9 +591,12 @@ const StopBookOverlay = props => {
             <View style={styleBookOverlay.cardImageContainer}>
               <Card.Image
                 style={styleBookOverlay.cardImage}
-                source={props.selectedBook?.thumbnail_image ? {uri: props.selectedBook?.thumbnail_image} : require('../../assets/image_break_100.png')}
-                resizeMode={props.selectedBook?.thumbnail_image ? "stretch" : "center"}
-               
+                source={
+                  props.selectedBook?.thumbnail_image
+                    ? {uri: props.selectedBook?.thumbnail_image}
+                    : require('../../assets/image_break.png')
+                }
+                resizeMode={'stretch'}
               />
             </View>
             <View style={styleBookOverlay.cartTextContainer}>
@@ -500,37 +608,38 @@ const StopBookOverlay = props => {
             </View>
           </Card>
           <View style={styleBookOverlay.rateParent}>
-              <View style={styleBookOverlay.singleRateContainer}>
-                <Text style={[globalStyle.fontMedium, {opacity:0.60}]}>
-                  How much fun was this book?
-                </Text>
-                <View style={{alignItems:'flex-start'}}>
-                  <Rating
-                    style={{ marginTop:5 }}
-                    image
-                    ratingCount={3}
-                    imageSize={30}
-                    startingValue={props.rateFunFactor}
-                    onFinishRating={rate => props.handleStarRateUpdate(rate)}
-                  />
-                </View>
+            <View style={styleBookOverlay.singleRateContainer}>
+              <Text style={[globalStyle.fontMedium, {opacity: 0.6}]}>
+                Tell us how much fun was this book?
+              </Text>
+              <View style={{alignItems: 'flex-start'}}>
+                <Rating
+                  style={{marginTop: 5}}
+                  image
+                  ratingCount={3}
+                  imageSize={30}
+                  startingValue={props.rateFunFactor}
+                  onFinishRating={rate => props.handleStarRateUpdate(rate)}
+                />
               </View>
-              <View style={styleBookOverlay.singleRateContainer}>
-                <Text style={[globalStyle.fontMedium, {opacity:0.60}]}>
-                  Did you understand this book?
-                </Text>
-                <View style={{alignItems:'flex-start'}}>
-                  <Rating
-                    style={{ marginTop:5 }}
-                    type='heart'
-                    ratingCount={3}
-                    imageSize={30}
-                    startingValue={props.rateComFactor}
-                    // showRating
-                    onFinishRating={rate => props.handleHeartRateUpdate(rate)}
-                  />
-                </View>
+            </View>
+            <View style={{width:3}}></View>
+            <View style={styleBookOverlay.singleRateContainer}>
+              <Text style={[globalStyle.fontMedium, {opacity: 0.6}]}>
+                Did you understand this book?
+              </Text>
+              <View style={{alignItems: 'flex-start'}}>
+                <Rating
+                  style={{marginTop: 5}}
+                  type="heart"
+                  ratingCount={3}
+                  imageSize={30}
+                  startingValue={props.rateComFactor}
+                  // showRating
+                  onFinishRating={rate => props.handleHeartRateUpdate(rate)}
+                />
               </View>
+            </View>
           </View>
           <View style={styleBookOverlay.inputContainer}>
             <Text style={[globalStyle.fontMedium]}>
@@ -548,11 +657,29 @@ const StopBookOverlay = props => {
           <View style={styleBookOverlay.buttonContainer}>
             <Button
               raised
-              // icon={<Icon name="caretright" style={{marginHorizontal: 8}} />}
-              buttonStyle={{backgroundColor: primary}}
+              icon={
+                props.stopReadingType === 'stop' ? (
+                  <Icon
+                    name="check-circle-o"
+                    size={17}
+                    style={{marginHorizontal: 5}}></Icon>
+                ) : (
+                  <Icon
+                    name="stop-circle-o"
+                    size={17}
+                    style={{marginHorizontal: 5}}></Icon>
+                )
+              }
+              buttonStyle={{backgroundColor: primary, minWidth: 100}}
               titleStyle={[{color: black}, globalStyle.fontBold]}
-              title={props.stopReadingType==='stop' ? "Stop Reading" : 'Finish Reading'}
+              title={
+                props.stopReadingType === 'stop'
+                  ? 'Stop Reading'
+                  : 'Finish Reading'
+              }
               onPress={e => props.handleStopReading(e)}
+              disabled={props.isOverlayActionLoading}
+              loading={props.isOverlayActionLoading}
             />
           </View>
         </View>
@@ -562,8 +689,8 @@ const StopBookOverlay = props => {
 };
 
 const styleBookOverlay = StyleSheet.create({
-  rateParent:{flexDirection:'row', flex:1, marginTop:10},
-  singleRateContainer:{flex:1}, 
+  rateParent: {flexDirection: 'row', flex: 1, marginTop: 10},
+  singleRateContainer: {flex: 1},
   bookContainer: {
     elevation: 4,
     padding: 0,
@@ -604,7 +731,6 @@ const styleBookOverlay = StyleSheet.create({
   },
   heading: {
     flex: 1,
-    textAlign: 'center',
     fontSize: 22,
   },
   overlayStyle: {
@@ -614,9 +740,15 @@ const styleBookOverlay = StyleSheet.create({
   buttonContainer: {marginVertical: 20, flex: 1, alignSelf: 'center'},
 });
 const addLogStyle = StyleSheet.create({
+  summaryInput: {
+    height: 250,
+    backgroundColor: lightGray,
+    borderRadius: 3,
+    flex: 1,
+  },
   parent: {
     width: '100%',
-    height: 'auto',
+    height: '100%',
     backgroundColor: white,
     borderTopEndRadius: 10,
     borderTopStartRadius: 10,
@@ -632,7 +764,7 @@ const addLogStyle = StyleSheet.create({
     justifyContent: 'center',
   },
   inputContainer: {flexDirection: 'row', alignItems: 'center', margin: 3},
-  inputHeading: {flex: 1, fontSize: 17},
+  inputHeading: {flex: 1, fontSize: 14},
   inputView: {
     width: 100,
     height: 45,
@@ -654,13 +786,13 @@ const logStyle = StyleSheet.create({
     margin: 2,
   },
   grayLine: {flex: 1, width: 2, backgroundColor: lightGray},
-  commentText: {flex: 1, fontSize: 12 },
-  commentStatusContainer: {flexDirection: 'row', marginTop:5},
+  commentText: {flex: 1, fontSize: 12},
+  commentStatusContainer: {flexDirection: 'row', marginTop: 5},
   readTimeContainer: {flex: 1, flexDirection: 'row', alignItems: 'center'},
   commentStatusDot: {
     width: 5,
     height: 5,
-    backgroundColor: tintDarkBackground,
+    backgroundColor: primary,
     borderRadius: 5 / 2,
     margin: 2,
   },
@@ -671,17 +803,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     width: '100%',
     justifyContent: 'center',
-    marginTop: 5,
+    // marginTop: 5,
   },
   tintBox: {
     backgroundColor: tintBackground,
     width: '95%',
-    height: 120,
+    height: 180,
     alignSelf: 'center',
     marginTop: 10,
   },
   bookImageParent: {justifyContent: 'center', margin: 7},
-  bookImage: {width: 90, height: 100, borderRadius: 3},
+  bookImage: {width: 130, height: 170, borderRadius: 3},
 
   mainContainer: {
     backgroundColor: white,

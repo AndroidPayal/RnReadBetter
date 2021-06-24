@@ -2,6 +2,7 @@ import React, {useEffect, useContext} from 'react';
 import {View, StyleSheet, SafeAreaView, Image} from 'react-native';
 import {CommonActions} from '@react-navigation/native';
 import {Context as AuthContext} from '../hoc/AuthContext';
+import { black, white } from '../values/colors';
 
 export default function SplashScreen(props) {
   const {value} = useContext(AuthContext);
@@ -26,9 +27,13 @@ export default function SplashScreen(props) {
   return (
     <SafeAreaView style={styles.background}>
       <View style={styles.background}>
-        <Image
+        {/* <Image
           style={styles.logo}
-          source={require('../assets/loader.gif')}></Image>
+          source={require('../assets/logo_loader.gif')}></Image> */}
+           <Image
+              source={require('../assets/read_better.png')}
+              style={styles.logoImage}
+          />
       </View>
     </SafeAreaView>
   );
@@ -37,12 +42,13 @@ const styles = StyleSheet.create({
   background: {
     width: '100%',
     height: '100%',
-    backgroundColor: '#fff',
+    backgroundColor: white,
     justifyContent: 'center',
     alignItems: 'center',
   },
   logo: {
-    width: '50%',
-    height: '30%',
+    width: '70%',
+    // height: '30%',
+    resizeMode:'contain'
   },
 });

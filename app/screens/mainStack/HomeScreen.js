@@ -1,15 +1,14 @@
 import React, {useContext, useEffect, useState} from 'react';
 import {ScrollView, FlatList} from 'react-native';
-import {View, StyleSheet, SafeAreaView} from 'react-native';
+import {View, StyleSheet, SafeAreaView, Button} from 'react-native';
 import {Text} from 'react-native-elements';
 import Icon1 from 'react-native-vector-icons/MaterialCommunityIcons';
 import Icon2 from 'react-native-vector-icons/Entypo';
 import axios from 'axios';
 import base64 from 'react-native-base64';
-import {Card} from 'react-native-elements';
-import RNCalendarEvents from 'react-native-calendar-events';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {Card, Overlay} from 'react-native-elements';
 import moment from 'moment';
+import { NavigationContainer, useIsFocused , useFocusEffect} from '@react-navigation/native';
 
 import {Context as AuthContext} from '../../hoc/AuthContext';
 import {
@@ -18,167 +17,52 @@ import {
   primary,
   black,
   mediumGray,
-  lightGray,
+  fourthGreen,
+  red,
+  secondaryBlue,
 } from '../../values/colors';
 import {
   getReadersUrl,
   getUserCredit,
   addNewReaderUrl,
   getBooksRecommendedForAll,
-  default_BookImage
 } from '../../values/config';
 import {TouchableOpacity} from 'react-native';
 import AddReader from './AddReader';
 import {ActivityIndicator} from 'react-native';
 import {globalStyle, globalTitleBar} from '../../values/constants';
+import NotificationService from '../../../NotificationService';
+import Toast from 'react-native-simple-toast';
+import {Context as UserContext} from '../../hoc/UserDataContext';
+import {ourWebClientId} from '../../values/config';
+import {
+  GoogleSignin,
+  statusCodes,
+} from '@react-native-google-signin/google-signin';
 
-export default function HomeScreen({navigation}) {
+function HomeScreen({navigation}) {
   const {value, signout} = useContext(AuthContext);
   const state = value.state;
-  const encodedUserId = base64.encode(state.userId.toString());
-  const [readers, setReaders] = useState([]);
-  const [flagNewReader, setFlagNewReader] = useState(false);
+  const {state1, addAReader, fetchAllReaders} = useContext(UserContext);
+
+  const encodedUserId = base64.encode(state.id.toString());
+  const [readers, setReaders] = useState(state1.allReaders);
+  // const [flagNewReader, setFlagNewReader] = useState(false);
   const [userCredit, setUserCredit] = useState(0);
   const [isLoading, setLoading] = useState(false);
-  const [recommendedBooks, setRecommendedBooks] = useState([])
+  const [recommendedBooks, setRecommendedBooks] = useState([]);
   const [popularBooks, setPopularBooks] = useState([]);
   const [openAddOverlay, setToggleOverlay] = useState(false);
+  const [showLogOutDialog, setShowLogoutDialog] = useState(false)
+  const dialogHeading = 'Are you sure to logout?'
+  const [notification, setNotification] = useState(
+    new NotificationService(onNotification),
+  );
 
-  function createEventInLocalStorage(localDataArray, newEventId, formatedDate, reminderAt, name) {
-    if (!localDataArray) {
-      localDataArray = {events: []};
-    }
-    const temp = {
-      reminderTime: reminderAt,
-      readerName: name,
-      createdAt: formatedDate,
-      eventId: newEventId,
-    };
-    localDataArray.events.push(temp);
-    console.log('final data adding to local = ', localDataArray);
-    AsyncStorage.setItem(
-      '@ReminderEvents',
-      JSON.stringify(localDataArray),
-    );
+  function onNotification(notif) {
+    console.log('called on notification');
+    // Alert.alert(notif.title, notif.message);
   }
-  async function createEventInCalender(title, start, end){
-    const createEvent = await new Promise((resolve, reject) => {
-      RNCalendarEvents.saveEvent(title, {
-          startDate: start,
-          endDate: end,
-          alarms: [
-            {
-              date: 5, //ALARM 5 MINUTE BRFORE TO START TIME
-            },
-          ],
-        },
-      )              
-      .then(eventId => {
-        console.log('new event id= ', eventId);
-        resolve(eventId)
-      })
-      .catch(error=>reject(error))
-    })
-    return createEvent;
-  }
-  function removeEventFromLocalStorage(localArray, data1) {
-    const index = localArray?.events?.findIndex(
-      obj => obj.readerName === data1,
-    );
-    localArray.events.splice(index, 1); //Remove item of this index
-  }
-
-  useEffect(() => {
-    const readerReminder = new Promise(async (resolve, reject) => {
-      const permission = await RNCalendarEvents.checkPermissions(
-        (readOnly = false),
-      );
-
-      if (permission === 'authorized') {
-        if (readers.length > 0) {
-          const today = moment(new Date()).toISOString();
-          const endDate = moment(today).add(3, 'days').toISOString();
-          const calenderCurrentEvents = await RNCalendarEvents.fetchAllEvents(
-            today,
-            endDate,
-          );
-          var localEvents = JSON.parse(
-            await AsyncStorage.getItem('@ReminderEvents'),
-          );
-
-          readers.map((reader, i) => {
-            var todayDate = moment(new Date()).format('YYYY-MM-DD');
-            var startDay = moment(todayDate + ' ' + reader.reminder_time);
-            var eventStartDate = moment(startDay).toISOString();
-            var eventEndDate = moment(startDay).add(3, 'days').toISOString();
-            // console.log('event start --> ', eventStartDate);
-            // console.log('event end --> ', eventEndDate);
-
-            var currentReaderEvent = localEvents?.events?.find(
-              obj => obj.readerName === reader.first_name,
-            );
-
-            //If NO EVENT EXIST FOR THIS READER IN LOCAL STORAGE
-            if (currentReaderEvent) {
-              console.log(
-                'event of this reader found in storage:',
-                currentReaderEvent.readerName,
-              );
-
-              //CHECK CALENDER EVENT OF THIS READER WITH LOCAL STORAGE DATA EXIST OR NOT
-              const calenderData = calenderCurrentEvents.find(
-                obj => obj.id === currentReaderEvent.eventId,
-              );
-
-              //MEANS THIS EVENT IS PRESENT IN CALENDER TOO
-              if (calenderData) {
-                console.log('event present in calender too!!!!!');
-                //CHECK IF REMINDER TIME OF THIS READER UPDATED (FROM WEB)
-                if (currentReaderEvent.reminderTime != reader.reminder_time) {
-                  //CREATE THIS READER EVENT IN CALENDER
-                  createEventInCalender(reader.first_name + ' Lets Read Book', eventStartDate, eventEndDate)
-                  .then(res=>{
-                    //AND UPDATE LOCAL STORAGE DATA WITH NEW EVENT ID
-                    removeEventFromLocalStorage(localEvents, reader.first_name)
-  
-                    createEventInLocalStorage(localEvents, res, todayDate, reader.reminder_time, reader.first_name)
-                  })
-                  .catch(error=>{console.log('error: ',error)})
-                }
-              } else {
-                console.log(
-                  'no event in calender for ',
-                  currentReaderEvent.readerName,
-                );
-                //CREATE THIS READER EVENT IN CALENDER
-                createEventInCalender(reader.first_name + ' Lets Read Book', eventStartDate, eventEndDate)
-                .then(res=>{
-                  //AND UPDATE LOCAL STORAGE DATA WITH NEW EVENT ID
-                  removeEventFromLocalStorage(localEvents, reader.first_name)
-
-                  createEventInLocalStorage(localEvents, res, todayDate, reader.reminder_time, reader.first_name)
-                })
-                .catch(error=>{console.log('error: ',error)})
-              }
-            } else {
-              console.log('event not found for reader=', reader.first_name);
-              //CREATE AN EVENT
-              createEventInCalender(reader.first_name + ' Lets Read Book', eventStartDate, eventEndDate)
-              .then((res)=>{
-                //ADD NEW USER REMINDER TIME TO LOCAL STORAGE
-                createEventInLocalStorage(localEvents, res, todayDate, reader.reminder_time, reader.first_name)
-              })
-              .catch(error=>console.log('error event creation: ', error))
-            }
-          });
-        }
-      } else {
-        reject('calender permission denied');
-        RNCalendarEvents.requestPermissions((readOnly = false));
-      }
-      return resolve(permission);
-    });
-  }, [readers]);
 
   function setTitleBar() {
     const creditUrl = getUserCredit + '/' + encodedUserId;
@@ -187,65 +71,111 @@ export default function HomeScreen({navigation}) {
       .get(creditUrl)
       .then(response2 => response2.data)
       .then(result => {
-        setUserCredit(result);
+        setUserCredit(result.credits);
         navigation.setOptions(
-          globalTitleBar(state.name.substring(0,1), '', result.credits, navigation, true),
+          globalTitleBar(
+            state.name.substring(0, 1),
+            '',
+            result.credits,
+            navigation,
+            true,
+            logOut,
+          ),
         );
         setLoading(false);
       })
-      .catch(error => console.log('credit error = ', error));
+      .catch(error => {
+        // setLoading(false);
+        console.log('credit error = ', error);
+        Toast.show(
+          "Server Error! can't fetch credit"
+        );
+      });
+  }
+  useEffect(() => {
+    GoogleSignin.configure({
+      webClientId: ourWebClientId,
+      offlineAccess: true,
+    });
+    // isSignedIn();
+  }, []);
+  const logOut = async () => {
+    console.log('log out button pressed');
+    setShowLogoutDialog(true)
+  };
+  const handleYesPress = async () => {
+    console.log('logging out user');
+    const isSignedIn = await GoogleSignin.isSignedIn();
+    if (isSignedIn) {
+      //LOGOUT FROM GOOGLE THEN REMOVE DATA FROM LOCAL
+      try {
+        await GoogleSignin.revokeAccess();
+        await GoogleSignin.signOut();
+      } catch (error) {
+        console.error('google signout error: ', error);
+      }
+    }
+    signout();
+  };
+  const handleNoPress = async () => {
+    setShowLogoutDialog(false)
   }
   function fetchRecommendedBooks() {
     const recommendedBookUrl = getBooksRecommendedForAll;
     //API TO FETCH READERS
     axios
-    .get(recommendedBookUrl)
-    .then(res=>res.data)
-    .then(response => {
-      setRecommendedBooks(response)
-      var tagArray = response
-
-      var randomIndex = Math.floor(Math.random() * (tagArray.length-10))
-      tagArray = tagArray.slice(randomIndex,randomIndex+10)
-      setPopularBooks(tagArray)
-  })
-    .catch(error => {
-      console.log('get recommended books error =', error);
-    });
-  }
-  useEffect(() => {
-    setLoading(true);
-    const readersUrl = getReadersUrl + '/' + encodedUserId;
-    //API TO FETCH READERS
-    axios
-      .get(readersUrl)
+      .get(recommendedBookUrl)
+      .then(res => res.data)
       .then(response => {
-        setReaders(response.data);
-        fetchRecommendedBooks()
-        setTitleBar();
+        setRecommendedBooks(response);
+        var tagArray = response;
+
+        var randomIndex = Math.floor(Math.random() * (tagArray.length - 10));
+        tagArray = tagArray.slice(randomIndex, randomIndex + 10);
+        setPopularBooks(tagArray);
       })
       .catch(error => {
-        console.log('get reader error =', error);
+        console.log('get recommended books error =', error);
+        Toast.show(
+          "Server Error! can't fetch recommendations"
+        );
       });
-  }, [flagNewReader]);
+  }
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log('hi we r inside foucs');
+      setLoading(true);
+      fetchRecommendedBooks();
+      setLoading(false);
+      return () => {
+        console.log('reached return  of focus');
+      };
+    }, [])
+  );
+  useEffect(() => {
+    setTitleBar();
+  }, []);//flagNewReader
 
   function handleRecommendedBookClick(item) {
     navigation.navigate('BookStartRead', {
       currentBook: item,
       currentReader: null,
-      haveReader: false
+      haveReader: false,
     });
   }
   const renderRecommendedBooks = (item, index) => {
     return (
-      <TouchableOpacity onPress={e => handleRecommendedBookClick(item)}
-      >
+      <TouchableOpacity onPress={e => handleRecommendedBookClick(item)}>
         <Card containerStyle={styleBookList.bookContainer}>
           <View style={styleBookList.cardImageContainer}>
             <Card.Image
               style={styleBookList.cardImage}
-              source={item.thumbnail_image ? {uri: item.thumbnail_image} : require('../../assets/image_break_100.png')}
-              resizeMode={item.thumbnail_image ? "stretch" : "center"}
+              source={
+                item.thumbnail_image
+                  ? {uri: item.thumbnail_image}
+                  : require('../../assets/image_break.png')
+              }
+              resizeMode={'stretch'}
             />
           </View>
           <View style={styleBookList.cartTextContainer}>
@@ -261,9 +191,9 @@ export default function HomeScreen({navigation}) {
   };
 
   const handleReaderSelection = (e, reader) => {
-    navigation.navigate('Reader',{
+    navigation.navigate('Reader', {
       refreshPage: false,
-      currentReader: reader,
+      currentReaderId: reader.id,
     });
   };
   const readersListView = readers.map((reader, i) => (
@@ -289,15 +219,34 @@ export default function HomeScreen({navigation}) {
     </TouchableOpacity>
   ));
   function handleAddReader() {
-    setToggleOverlay(true);
+    if (userCredit >= 300) {
+      setToggleOverlay(true);
+    } else {
+      Toast.show("You don't have enough credit");
+    }
   }
   function cancelAddReader(e) {
     setToggleOverlay(false);
   }
+  function createLocalNotification(userName, reminderTime) {
+    var todayDate = moment(new Date()).format('YYYY-MM-DD');
+    var startDay = moment(todayDate + ' ' + reminderTime);
+    var eventStartDate = moment(startDay).toISOString();
+
+    //CHECK IF EVENT TIME HAS PASSED FOR TODAY
+    if (!moment(new Date()).isBefore(eventStartDate)) {
+      //THIS MEANS NOTIFICATION TIME HAS GONE SO WE ADD THIS NOTIFICATION FOR TMROW
+      todayDate = moment(new Date()).add(1, 'day').format('YYYY-MM-DD');
+      startDay = moment(todayDate + ' ' + reminderTime);
+      eventStartDate = moment(startDay).toISOString();
+    }
+
+    var id = Math.floor(Math.random() * 1000);
+    notification.scheduleNotification(userName, eventStartDate, id);
+  }
   function addNewReader(obj) {
     setLoading(true);
     obj._token = state.token; //ADDING CSRF TOKEN TO URL
-    console.log('add reader url=', addNewReaderUrl, '\nobj = ', obj);
 
     // API TO ADD NEW READER
     const apicall = new Promise((resolve, reject) => {
@@ -305,32 +254,19 @@ export default function HomeScreen({navigation}) {
         .post(addNewReaderUrl, obj)
         .then(response => response.data)
         .then(data => {
-          console.log('add reader response = ', data);
-          setLoading(false);
-          setFlagNewReader(flagNewReader === true ? false : true);
-
-          //CREATE CALENDER EVENT
-          var todayDate = moment(new Date()).format('YYYY-MM-DD');
-          var startDay = moment(todayDate + ' ' + obj.time_picker);
-          var eventStartDate = moment(startDay).toISOString();
-          var eventEndDate = moment(startDay).add(3, 'days').toISOString(); //months/ years
-          console.log('event start --> ', eventStartDate);
-          console.log('event end --> ', eventEndDate);
-
-          createEventInCalender(obj.firstname_reader + ' lets read Book', eventStartDate, eventEndDate)
-          .then((res)=>{
-            //ADD NEW USER REMINDER TIME TO LOCAL STORAGE
-            AsyncStorage.getItem('@ReminderEvents')
-            .then(eventData => {
-              var newEventData = eventData
-                ? JSON.parse(eventData)
-                : {events: []};
-              createEventInLocalStorage(newEventData, res, todayDate, obj.time_picker, obj.firstname_reader)
+          console.log('add reader res =', data);
+          //--------------
+          // setFlagNewReader(flagNewReader === true ? false : true);
+          setTitleBar();
+          fetchAllReaders({userid: value.state.id})
+            .then(res => {
+              setLoading(false);
+              console.log('fetch reader res =', res);
+              createLocalNotification(obj.firstname_reader, obj.time_picker);
+              setReaders(res);
+              return resolve(data.message.toString());
             })
-            .catch(error => console.log('storage error:', error));
-          });
-
-          return resolve(data.message.toString());
+            .catch(err => console.log(err));
         })
         .catch(error => {
           console.log('error adding new log:', error);
@@ -362,7 +298,7 @@ export default function HomeScreen({navigation}) {
       style={{
         flex: 1,
         justifyContent: 'center',
-        backgroundColor: white
+        backgroundColor: white,
       }}
       size="large"
       color={primary}
@@ -417,10 +353,33 @@ export default function HomeScreen({navigation}) {
           cancelAddReader={cancelAddReader}
           addNewReader={addNewReader}
         />
+
+        <Overlay isVisible={showLogOutDialog} onBackdropPress={ e => setShowLogoutDialog(false)}>
+          <View style={{minWidth:'85%'}}>
+              <Text style={[{marginTop:10, marginBottom:20, marginHorizontal:10, textAlign:'center', fontSize:17}, globalStyle.font]}>
+                  {dialogHeading}
+              </Text>
+              <View style={{flexDirection:'row', justifyContent:'space-around', marginBottom:10}}>
+                  <TouchableOpacity style={styles.loginTouchable}
+                      onPress={e => handleNoPress()} >
+                      <View style={[styles.buttonStyle, {backgroundColor: fourthGreen}]}>
+                          <Text style={[{color:white, fontSize:16}, globalStyle.fontBold]}>Cancel</Text>
+                      </View>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.loginTouchable}
+                      onPress={e => handleYesPress()} >
+                      <View style={[styles.buttonStyle,  {backgroundColor: red}]}>
+                          <Text style={[{color:white, fontSize:16}, globalStyle.fontBold]}>Yes</Text>
+                      </View>
+                  </TouchableOpacity>
+              </View>
+          </View>
+        </Overlay>
       </SafeAreaView>
     </ScrollView>
   );
 }
+export default HomeScreen;
 
 const styleBookList = StyleSheet.create({
   bookContainer: {
@@ -499,4 +458,7 @@ const styles = StyleSheet.create({
     color: black,
     marginBottom: 5,
   },
+  loginTouchable:{flexDirection:'row', justifyContent:'center'},
+  buttonStyle:{flexDirection:'row',width:100, height:45, backgroundColor:secondaryBlue, borderRadius:30, justifyContent:'center', alignItems:'center'},
+
 });

@@ -8,8 +8,8 @@ import {
   SafeAreaView,
   StyleSheet,
   Text,
-  ToastAndroid,
 } from 'react-native';
+import Toast from 'react-native-simple-toast';
 import axios from 'axios';
 import base64 from 'react-native-base64';
 import {Card} from 'react-native-elements';
@@ -18,104 +18,190 @@ import Icon from 'react-native-vector-icons/AntDesign';
 import Icon2 from 'react-native-vector-icons/Feather';
 import moment from 'moment';
 import Datetimepicker from '@react-native-community/datetimepicker';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import RNCalendarEvents from 'react-native-calendar-events';
+import { NavigationContainer, useIsFocused , useFocusEffect} from '@react-navigation/native';
 
 import {Context as AuthContext} from '../../hoc/AuthContext';
+import {Context as UserContext} from '../../hoc/UserDataContext';
 import {black, darkGray, primary, white} from '../../values/colors';
 import {
   getBooksOfAReader,
   getUserCredit,
   getBookRecommendedForAReader,
-  setBookStartReading,
   updateReminderTimeUrl,
-  default_BookImage,
 } from '../../values/config';
 import {globalStyle, globalTitleBar} from '../../values/constants';
+import NotificationService from '../../../NotificationService';
+import { ourWebClientId } from '../../values/config';
+import {
+  GoogleSignin,
+  statusCodes,
+} from '@react-native-google-signin/google-signin';
 
 export default function ReaderPage({route, navigation}) {
   const {value, signout} = useContext(AuthContext);
+  const {state1, fetchAllReaders } = useContext(UserContext);
   const state = value.state;
-  const encodedUserId = base64.encode(state.userId.toString());
+  const encodedUserId = base64.encode(state.id.toString());
 
-  const currentReader = route.params.currentReader;
-  const encodedReaderId = base64.encode(currentReader.id.toString());
-  const refreshPage = route.params.refreshPage
+  const currentReaderId = state.isReader ? route.params.currentReader.id : route.params.currentReaderId;
+  const [currentReader, setCurrentReader] = useState(state.isReader ? route.params.currentReader : state1.allReaders.find(obj => obj.id === currentReaderId)) 
+  console.log('current reader = ',currentReader);
+  const encodedReaderId = base64.encode(currentReaderId.toString());
+  // const refreshPage = route.params.refreshPage;
+  // var refreshPage = route.params.refreshPage
+  // const [refreshState, setRefreshState] = useState(route.params.refreshPage)
   const [booksCurrentlyReading, setCurrentBooks] = useState([]);
   const [booksStoppedReading, setStoppedBooks] = useState([]);
+  const [booksFinishedeading, setFinishedBooks] = useState([]);
   const [booksRecommended, setbooksRecommended] = useState([]);
   const [isLoading, setLoading] = useState(false);
-  {/*CURRENT BOOK SCROLL*/}
+  {
+    /*CURRENT BOOK SCROLL*/
+  }
   const [scrollWidthCurrentBooks, setScrollWidthCurrentBooks] = useState(0);
   const [contentWidthCurrentBooks, setContentWidthCurrentBooks] = useState(0);
   const [scrollPercentCurrentBooks, setScrollPercentCurrentBooks] = useState(0);
   const [scrollElementWidthPercent, setPercentWidth] = useState(50);
-  {/*RECOMMENDED BOOK SCROLL*/}
-  const [scrollWidthRecommendedBooks, setScrollWidthRecommendedBooks] = useState(0);
-  const [contentWidthRecommendedBooks, setContentWidthRecommendedBooks] = useState(0);
-  const [scrollPercentRecommendedBooks, setScrollPercentRecommendedBooks] = useState(0);
-  {/*ALREADY READ BOOK SCROLL*/}
+  {
+    /*RECOMMENDED BOOK SCROLL*/
+  }
+  const [
+    scrollWidthRecommendedBooks,
+    setScrollWidthRecommendedBooks,
+  ] = useState(0);
+  const [
+    contentWidthRecommendedBooks,
+    setContentWidthRecommendedBooks,
+  ] = useState(0);
+  const [
+    scrollPercentRecommendedBooks,
+    setScrollPercentRecommendedBooks,
+  ] = useState(0);
+  {
+    /*ALREADY READ BOOK SCROLL*/
+  }
   const [scrollWidthReadBooks, setScrollWidthReadBooks] = useState(0);
   const [contentWidthReadooks, setContentWidthReadBooks] = useState(0);
   const [scrollPercentReadBooks, setScrollPercentReadBooks] = useState(0);
+  const [notification, setNotification] = useState(
+    new NotificationService(onNotification),
+  );
 
-  // const [userCredit, setUserCredit] = useState(0);
-console.log('refresh page: ',refreshPage);
   var todayDate = moment(new Date()).format('YYYY-MM-DD');
-  var tempTime = moment(todayDate + ' ' + currentReader.reminder_time);
+  var time = currentReader.reminder_time
+  var tempTime = moment(todayDate + ' ' + time);//? currentReader?.reminder_time: '00:00:00'
   const [reminderTime, setReminderTime] = useState(new Date(tempTime));
   const [showTimer, setShowTimer] = useState(false);
 
-  function setTitleBar() {
-    const creditUrl = getUserCredit + '/' + encodedUserId;
-    //API TO FETCH User Credit
-    axios
-      .get(creditUrl)
-      .then(response2 => response2.data)
-      .then(result => {
-        // setUserCredit(result);
-        navigation.setOptions(
-          globalTitleBar(
-            state.name.substring(0,1),
-            currentReader.first_name + "'s Bookshelf",
-            result.credits,
-            navigation,
-            false,
-          ),
-        );
-        setLoading(false);
-      })
-      .catch(error => console.log('credit error = ', error));
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log('hi we r inside foucs');
+      setLoading(true);
+      fetchMyBooks()
+      fetchRecommendedBooks()
+      setLoading(false);
+      return () => {
+        console.log('reached return  of focus');
+      };
+    }, [])
+  );
+
+  function onNotification(notif) {
+    console.log('called on notification of reader page');
+    // Alert.alert(notif.title, notif.message);
+  }
+  useEffect(() => {
+    GoogleSignin.configure({
+      webClientId: ourWebClientId,
+      offlineAccess: true,
+    });
+    // isSignedIn();
+  }, []);
+  const logOut = async() => {
+    console.log('log out called');
+    const isSignedIn = await GoogleSignin.isSignedIn();
+    if(isSignedIn){
+      //LOGOUT FROM GOOGLE THEN REMOVE DATA FROM LOCAL
+      try {
+        await GoogleSignin.revokeAccess();
+        await GoogleSignin.signOut();
+      } catch (error) {
+        console.error('google signout error: ',error);
+      }
+    }
+    signout()
   }
 
-  useEffect(() => {
-    setLoading(true);
+  function setTitleBar() {
+    // const creditUrl = getUserCredit + '/' + encodedUserId;
+    // //API TO FETCH User Credit
+    // axios
+    //   .get(creditUrl)
+    //   .then(response2 => response2.data)
+    //   .then(result => {
+    //     // setUserCredit(result);
+        navigation.setOptions(
+          globalTitleBar(
+            state.name.substring(0, 1),
+            currentReader?.first_name + "'s Bookshelf",
+            null,
+            navigation,
+            value.state.isReader ? true : false,
+            logOut
+          )
+        );
+      // })
+      // .catch(error => {
+      //   console.log('credit error = ', error);
+      //   Toast.show(
+      //     "Server Error! can't fetch credit"
+      //   );
+      // });
+  }
+
+  function fetchMyBooks(params) {
     const bookURL = getBooksOfAReader + '/' + encodedReaderId;
-    const bookRecommendedURL =
-      getBookRecommendedForAReader + '/' + encodedReaderId + '/start/reading';
-    //FETCH BOOKS FROM API
+     //FETCH BOOKS FROM API
     axios
-      .get(bookURL)
-      .then(response => response.data)
-      .then(data => {
-        setCurrentBooks(data.StartedBooks);
-        setStoppedBooks(data.FinishedAndStopedBooks);
+    .get(bookURL)
+    .then(response => response.data)
+    .then(data => {
+      setCurrentBooks(data.StartedBooks);
+      setFinishedBooks(data.FinishedBooks);
+      setStoppedBooks(data.StoppedBooks);
+    })
+    .catch(error => {
+      console.log('getBooks url response error = ', error);
+      Toast.show(
+        "Server Error! can't fetch books"
+      );
+    });
+  }
+  function fetchRecommendedBooks(params) {
+    const bookRecommendedURL =
+    getBookRecommendedForAReader + '/' + encodedReaderId + '/start/reading';
         //API TO GET RECOMMENDED BOOKS FOR THIS READER
         axios
           .get(bookRecommendedURL)
           .then(response => response.data)
           .then(data => {
+            // console.log('recommended books = ', data);
             setbooksRecommended(data);
-            setTitleBar();
           })
           .catch(error => {
             console.log('getBooks recommended response error = ', error);
+            Toast.show(
+              "Server Error! can't fetch recommendations"
+            );
           });
-      })
-      .catch(error => {
-        console.log('getBooks url response error = ', error);
-      });
-  }, [refreshPage]);
+  }
+  useEffect(() => {
+    // setLoading(true);
+    // fetchMyBooks()
+    setTitleBar();
+    // setLoading(false);
+    // fetchRecommendedBooks()
+  }, []);//refreshPage
 
   function handleBookClick(book) {
     navigation.navigate('BookReading', {
@@ -130,8 +216,12 @@ console.log('refresh page: ',refreshPage);
           <View style={styles.cardImageContainer}>
             <Card.Image
               style={styles.cardImage}
-              source={item.thumbnail_image ? {uri: item.thumbnail_image} : require('../../assets/image_break_100.png')}
-              resizeMode={item.thumbnail_image ? "stretch" : "center"}
+              source={
+                item.thumbnail_image
+                  ? {uri: item.thumbnail_image}
+                  : require('../../assets/image_break.png')
+              }
+              resizeMode={'stretch'}
             />
           </View>
           <View style={styles.cartTextContainer}>
@@ -145,16 +235,28 @@ console.log('refresh page: ',refreshPage);
       </TouchableOpacity>
     );
   };
+  function handleStoppedBookClick(book) {
+    navigation.navigate('BookStartRead', {
+      currentBook: book,
+      currentReader: currentReader,
+      haveReader: true,
+      noActionButtons: true
+    });
+  }
   const renderAlreadyReadBooks = (item, index) => {
     return (
-      <TouchableOpacity>
+      <TouchableOpacity onPress={e => handleStoppedBookClick(item)}>
         <Card containerStyle={styles.bookContainer}>
           <View style={styles.cardImageContainer}>
             <Card.Image
               style={styles.cardImage}
-              source={item.thumbnail_image ? {uri: item.thumbnail_image} : require('../../assets/image_break_100.png')}
-              resizeMode={item.thumbnail_image ? "stretch" : "center"}
-             />
+              source={
+                item.thumbnail_image
+                  ? {uri: item.thumbnail_image}
+                  : require('../../assets/image_break.png')
+              }
+              resizeMode={'stretch'}
+            />
           </View>
           <View style={styles.cartTextContainer}>
             <Text
@@ -171,7 +273,7 @@ console.log('refresh page: ',refreshPage);
     navigation.navigate('BookStartRead', {
       currentBook: book,
       currentReader: currentReader,
-      haveReader: true
+      haveReader: true,
     });
   }
   const renderRecommendedBooks = (item, index) => {
@@ -181,8 +283,12 @@ console.log('refresh page: ',refreshPage);
           <View style={styles.cardImageContainer}>
             <Card.Image
               style={styles.cardImage}
-              source={item.thumbnail_image ? {uri: item.thumbnail_image} : require('../../assets/image_break_100.png')}
-              resizeMode={item.thumbnail_image ? "stretch" : "center"}
+              source={
+                item.thumbnail_image
+                  ? {uri: item.thumbnail_image}
+                  : require('../../assets/image_break.png')
+              }
+              resizeMode={'stretch'}
             />
           </View>
           <View style={styles.cartTextContainer}>
@@ -199,102 +305,67 @@ console.log('refresh page: ',refreshPage);
   function handleViewMoreClick() {
     navigation.navigate('ViewAllBooks', {
       bookType: 'recommended',
-      currentReader: currentReader
-    })
+      currentReader: currentReader,
+    });
   }
 
   function updateReminderTime(e) {
-    // console.log('update reminder time')
-    RNCalendarEvents.requestPermissions((readOnly = false))
-      .then(res => {
-        if (res === 'authorized') {
-          setShowTimer(true);
-        } else {
-          ToastAndroid.show('Calender permission denied', ToastAndroid.SHORT);
-        }
-      })
-      .catch(error => {
-        console.log('request permission error:', error);
-      });
+    setShowTimer(true);
   }
+  function updateLocalNotification(userName, reminderTime) {
+    var todayDate = moment(new Date()).format('YYYY-MM-DD');
+    var startDay = moment(todayDate + ' ' + reminderTime);
+    var eventStartDate = moment(startDay).toISOString();
 
+    //CHECK IF EVENT TIME HAS PASSED FOR TODAY
+    if (!moment(new Date()).isBefore(eventStartDate)) {
+      //THIS MEANS NOTIFICATION TIME HAS GONE SO WE ADD THIS NOTIFICATION FOR TMROW
+      todayDate = moment(new Date()).add(1, 'day').format('YYYY-MM-DD');
+      startDay = moment(todayDate + ' ' + reminderTime);
+      eventStartDate = moment(startDay).toISOString();
+    }
+
+    //GET ID OF OLD EVENT OF THIS READER
+    var id = Math.floor(Math.random() * 1000);
+    notification.getAllScheduledNotification().then(res => {
+      var currentReaderEvent = res?.find(obj => obj.message === userName);
+      if (currentReaderEvent) {
+        id = currentReaderEvent.id;
+      }
+      console.log('id=', id, 'data = ', currentReaderEvent);
+      notification.scheduleNotification(userName, eventStartDate, id);
+      Toast.show('Hey! Reminder time updated');
+    });
+  }
   const onTimeChange = (event, time) => {
     setShowTimer(false);
 
     if (time) {
       setReminderTime(time);
-      // setLoading(true);
       //UPDATE TIME IN SERVER HIT API
       const updateTimeUrl = updateReminderTimeUrl + '/' + encodedReaderId;
       const obj = {
         reminder_time: moment(time).format('HH:mm:SS'),
         _token: state.token,
       };
-      console.log('url = ', updateTimeUrl, ' obj=', obj);
       //FETCH BOOKS FROM API
       axios
         .post(updateTimeUrl, obj)
         .then(response => response.data)
         .then(data => {
-          console.log('updatetime res =', data);
-
-          //UPDATE LOCAL STORAGE
-          AsyncStorage.getItem('@ReminderEvents')
-            .then(eventData => {
-              var parsedStorage = JSON.parse(eventData);
-              var tempi = parsedStorage.events.findIndex(
-                obj => obj.readerName === currentReader.first_name,
-              );
-              parsedStorage.events[tempi].reminderTime = moment(time).format(
-                'HH:mm:SS',
-              );
-              AsyncStorage.setItem(
-                '@ReminderEvents',
-                JSON.stringify(parsedStorage),
-              );
-
-              // console.log('local data =', parsedStorage);
-              // console.log('old time =', parsedStorage.events[tempi].reminderTime );
-              // console.log('new time =', moment(time).format('HH:mm:SS'));
-
-              var todayDate = moment(new Date()).format('YYYY-MM-DD');
-              var startDay = moment(
-                todayDate + ' ' + moment(time).format('HH:mm:SS'),
-              );
-              var eventStartDate = moment(startDay).toISOString();
-              var eventEndDate = moment(startDay).add(3, 'days').toISOString();
-
-              // UPDATE CALENDER EVENT WITH NEW TIME
-              RNCalendarEvents.saveEvent(
-                parsedStorage.events[tempi].readerName + ' Lets Read Book',
-                {
-                  id: parsedStorage.events[tempi].eventId,
-                  startDate: eventStartDate,
-                  endDate: eventEndDate,
-                  alarms: [
-                    {
-                      date: 5, //ALARM 5 MINUTE BRFORE TO START TIME
-                    },
-                  ],
-                },
-              )
-                .then(res => {
-                  ToastAndroid.show('Reminder time updated', ToastAndroid.SHORT,
-                  );
-                  // setLoading(false);
-                })
-                .catch(error => {
-                  console.log('event update error: ', error);
-                  ToastAndroid.show( 'Calender permission denied!', ToastAndroid.SHORT,
-                  );
-                  // setLoading(false);
-                });
-            })
-            .catch(error => console.log('storage time update error:', error));
+          if(!value.state.isReader) fetchAllReaders({userid: state.id})
+          //UPDATE NOTIFICATION EVENT
+          updateLocalNotification(
+            currentReader?.first_name,
+            moment(time).format('HH:mm:SS'),
+          );
+          // Toast.show('Reminder time updated')
         })
         .catch(error => {
           console.log('update reminder time error = ', error);
-          // setLoading(false);
+          Toast.show(
+            "Server Error! can't update time"
+          );
         });
     }
   };
@@ -349,28 +420,30 @@ console.log('refresh page: ',refreshPage);
       style={{
         flex: 1,
         justifyContent: 'center',
-        backgroundColor: white
+        backgroundColor: white,
       }}
       size="large"
       color={primary}
     />
   ) : (
-    <ScrollView style={{backgroundColor:white}}>
+    <ScrollView style={{backgroundColor: white}}>
       <SafeAreaView style={styles.parentContainer}>
         {/* REMINDER */}
-        <View style={[styles.heading,{marginTop:0}]}>
-          <Text style={globalStyle.subHeading}>Daily Reminder</Text>
-          <Chip style={{margin: 10, backgroundColor: primary}}>
+        <View style={[styles.heading, {marginTop: 0}]}>
+          <Text style={[globalStyle.font, {fontSize:13, width:'90%'}]}>{currentReader.first_name + ' gets daily reading reminders at ' + moment(reminderTime).format('hh:mm a')}</Text>
+          {/* <Chip style={{margin: 10, backgroundColor: primary}}>
             {moment(reminderTime).format('hh:mm a')}
-          </Chip>
-          <View style={{alignItems: 'flex-end', flex: 1}}>
-            <Icon2 name="edit" size={20} onPress={e => updateReminderTime() } />
-          </View>
+          </Chip> */}
+          <TouchableOpacity
+            style={{alignItems: 'flex-end', flex: 1}}
+            onPress={e => updateReminderTime()}>
+            <Icon2 name="edit" size={20} />
+          </TouchableOpacity>
         </View>
 
         {/* CURRENTLY READING BOOKS */}
         <View style={styles.heading}>
-          <Text style={globalStyle.subHeading}>Books I'm reading</Text>
+          <Text style={globalStyle.subHeading}>Reading now</Text>
         </View>
         <View style={styles.flatlistContainer}>
           {scrollPercentCurrentBooks > 10 ? (
@@ -399,17 +472,21 @@ console.log('refresh page: ',refreshPage);
         </View>
         {/* BOOK SUGGESTIONS */}
         <View style={styles.heading}>
-          <Text style={globalStyle.subHeading}>Recommended books</Text>
-          <TouchableOpacity style={{alignItems: 'flex-end', flex: 1}} onPress={e=>{handleViewMoreClick()}}>
-            <Text style={[{fontSize: 14}, globalStyle.font]}>Show more</Text>
+          <Text style={globalStyle.subHeading}>Our recommendations</Text>
+          <TouchableOpacity
+            style={{alignItems: 'flex-end', flex: 1}}
+            onPress={e => {
+              handleViewMoreClick();
+            }}>
+            <Text style={[{fontSize: 14}, globalStyle.font]}>View all</Text>
           </TouchableOpacity>
         </View>
         <View style={styles.flatlistContainer}>
           {scrollPercentRecommendedBooks > 10 ? (
-              <View style={styles.scrollIconLeft}>
-                <Icon name="left" size={14} color={darkGray}></Icon>
-              </View>
-            ) : null}
+            <View style={styles.scrollIconLeft}>
+              <Icon name="left" size={14} color={darkGray}></Icon>
+            </View>
+          ) : null}
           <FlatList
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -421,24 +498,51 @@ console.log('refresh page: ',refreshPage);
             onLayout={ew => setRecommendedScrollViewWidth(ew)}
             onContentSizeChange={(width, _) => {
               setRecommendedContentSize(width);
-            }}
-            ></FlatList>
-            {scrollPercentRecommendedBooks < scrollElementWidthPercent - 10 ? (
-              <View style={styles.scrollIconLeft}>
-                <Icon name="right" size={14} color={darkGray}></Icon>
-              </View>
-            ) : null}
+            }}></FlatList>
+          {scrollPercentRecommendedBooks < scrollElementWidthPercent - 10 ? (
+            <View style={styles.scrollIconLeft}>
+              <Icon name="right" size={14} color={darkGray}></Icon>
+            </View>
+          ) : null}
         </View>
         {/* BOOKS READ */}
         <View style={styles.heading}>
-          <Text style={globalStyle.subHeading}>Books Read</Text>
+          <Text style={globalStyle.subHeading}>Already read</Text>
         </View>
         <View style={styles.flatlistContainer}>
-        {scrollPercentReadBooks > 10 ? (
-              <View style={styles.scrollIconLeft}>
-                <Icon name="left" size={14} color={darkGray}></Icon>
-              </View>
-            ) : null}
+          {scrollPercentReadBooks > 10 ? (
+            <View style={styles.scrollIconLeft}>
+              <Icon name="left" size={14} color={darkGray}></Icon>
+            </View>
+          ) : null}
+          <FlatList
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            data={booksFinishedeading}
+            renderItem={({item, index}) => renderAlreadyReadBooks(item, index)}
+            keyExtractor={(item, index) => index}
+            key={item => item}
+            onScroll={e => handleReadScrollView(e)}
+            onLayout={ew => setReadScrollViewWidth(ew)}
+            onContentSizeChange={(width, _) => {
+              setReadContentSize(width);
+            }}></FlatList>
+          {scrollPercentReadBooks < scrollElementWidthPercent - 10 ? (
+            <View style={styles.scrollIconLeft}>
+              <Icon name="right" size={14} color={darkGray}></Icon>
+            </View>
+          ) : null}
+        </View>
+        {/* BOOKS READ */}
+        <View style={styles.heading}>
+          <Text style={globalStyle.subHeading}>Not reading anymore</Text>
+        </View>
+        <View style={styles.flatlistContainer}>
+          {scrollPercentReadBooks > 10 ? (
+            <View style={styles.scrollIconLeft}>
+              <Icon name="left" size={14} color={darkGray}></Icon>
+            </View>
+          ) : null}
           <FlatList
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -450,13 +554,12 @@ console.log('refresh page: ',refreshPage);
             onLayout={ew => setReadScrollViewWidth(ew)}
             onContentSizeChange={(width, _) => {
               setReadContentSize(width);
-            }}
-            ></FlatList>
-            {scrollPercentReadBooks < scrollElementWidthPercent - 10 ? (
-              <View style={styles.scrollIconLeft}>
-                <Icon name="right" size={14} color={darkGray}></Icon>
-              </View>
-            ) : null}
+            }}></FlatList>
+          {scrollPercentReadBooks < scrollElementWidthPercent - 10 ? (
+            <View style={styles.scrollIconLeft}>
+              <Icon name="right" size={14} color={darkGray}></Icon>
+            </View>
+          ) : null}
         </View>
 
         {showTimer ? (

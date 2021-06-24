@@ -1,18 +1,26 @@
 import React from 'react';
-import { Button, Text, Overlay, Input } from 'react-native-elements';
-import { View, StyleSheet, ToastAndroid } from 'react-native';
-import { Picker } from "@react-native-picker/picker";
+import {Button, Text, Overlay, Input} from 'react-native-elements';
+import {View, StyleSheet} from 'react-native';
+import Toast from 'react-native-simple-toast';
+import {Picker} from '@react-native-picker/picker';
 import Stepper from 'react-native-stepper-ui';
 import Icon from 'react-native-vector-icons/AntDesign';
 import Icon2 from 'react-native-vector-icons/Ionicons';
-import { RadioButton } from 'react-native-paper';
+import {RadioButton} from 'react-native-paper';
 import Datetimepicker from '@react-native-community/datetimepicker';
-import moment from "moment";
-import axios from 'axios'
+import moment from 'moment';
+import axios from 'axios';
 
-import { darkGray, lightGray, primary, red, secondaryLight, white } from '../../values/colors';
-import { globalStyle } from '../../values/constants';
-import { fetchSchoolUrl } from "../../values/config";
+import {
+  darkGray,
+  lightGray,
+  primary,
+  red,
+  secondaryLight,
+  white,
+} from '../../values/colors';
+import {globalStyle} from '../../values/constants';
+import {fetchSchoolUrl} from '../../values/config';
 
 export default class AddReader extends React.Component {
   constructor(props) {
@@ -24,23 +32,177 @@ export default class AddReader extends React.Component {
       gender: 'male',
       dob: new Date(),
       showDatePicker: false, //PICKER FOR DOB
-      monthNames: ['January','February','March','April','May','June','July','August','September','October','November','December'],
+      monthNames: [
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December',
+      ],
       reminderTime: new Date(),
       showTimePicker: false, //PICKER FOR REMINDER TIME
       grade: 0,
-      gradeArray: ['Kindergarten', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14'],
+      gradeArray: [
+        'Kindergarten',
+        '1',
+        '2',
+        '3',
+        '4',
+        '5',
+        '6',
+        '7',
+        '8',
+        '9',
+        '10',
+        '11',
+        '12',
+        '13',
+        '14',
+      ],
       school: 1,
       draLevel: 0,
-      draArray: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35', '36', '37', '38', '39', '40', '41', '42', '43', '44'],
+      draArray: [
+        '1',
+        '2',
+        '3',
+        '4',
+        '5',
+        '6',
+        '7',
+        '8',
+        '9',
+        '10',
+        '11',
+        '12',
+        '13',
+        '14',
+        '15',
+        '16',
+        '17',
+        '18',
+        '19',
+        '20',
+        '21',
+        '22',
+        '23',
+        '24',
+        '25',
+        '26',
+        '27',
+        '28',
+        '29',
+        '30',
+        '31',
+        '32',
+        '33',
+        '34',
+        '35',
+        '36',
+        '37',
+        '38',
+        '39',
+        '40',
+        '41',
+        '42',
+        '43',
+        '44',
+      ],
       graLevel: 0,
-      graArray: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'],
+      graArray: [
+        'A',
+        'B',
+        'C',
+        'D',
+        'E',
+        'F',
+        'G',
+        'H',
+        'I',
+        'J',
+        'K',
+        'L',
+        'M',
+        'N',
+        'O',
+        'P',
+        'Q',
+        'R',
+        'S',
+        'T',
+        'U',
+        'V',
+        'W',
+        'X',
+        'Y',
+        'Z',
+      ],
       lexelLevel: 0,
-      lexelArray: [25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300, 325, 350, 375, 400, 425, 450, 475, 500, 525, 550, 575, 600, 625, 650, 675, 700, 725, 750, 775, 800, 825, 850, 875, 900, 925, 950, 975, 1000, 1025, 1050, 1075, 1100, 1125, 1150, 1175, 1200, 1225, 1250, 1275, 1300],
-      errorField:'',
-      pincode:'',
-      schoolName:'',
-      schoolList:[{name: 'Select school'}, {name: 'Add new school'}],
-      selectedSchool:0
+      lexelArray: [
+        25,
+        50,
+        75,
+        100,
+        125,
+        150,
+        175,
+        200,
+        225,
+        250,
+        275,
+        300,
+        325,
+        350,
+        375,
+        400,
+        425,
+        450,
+        475,
+        500,
+        525,
+        550,
+        575,
+        600,
+        625,
+        650,
+        675,
+        700,
+        725,
+        750,
+        775,
+        800,
+        825,
+        850,
+        875,
+        900,
+        925,
+        950,
+        975,
+        1000,
+        1025,
+        1050,
+        1075,
+        1100,
+        1125,
+        1150,
+        1175,
+        1200,
+        1225,
+        1250,
+        1275,
+        1300,
+      ],
+      errorField: '',
+      pincode: '',
+      schoolName: '',
+      schoolList: [{name: 'Select school'}, {name: 'Add new school'}],
+      selectedSchool: 0,
     };
   }
   /*
@@ -59,11 +221,26 @@ export default class AddReader extends React.Component {
       activePage: value,
     });
   };
-  
+
   handleAddNewReader = e => {
-    const { firstName, lastName, gender, dob, reminderTime, grade, school, draLevel, graLevel, lexelLevel, pincode, selectedSchool, schoolName, schoolList } = this.state;
-    const formated_dob = moment(dob).format('YYYY-MM-DD')
-    const formated_time = moment(reminderTime).format('HH:mm:ss')
+    const {
+      firstName,
+      lastName,
+      gender,
+      dob,
+      reminderTime,
+      grade,
+      school,
+      draLevel,
+      graLevel,
+      lexelLevel,
+      pincode,
+      selectedSchool,
+      schoolName,
+      schoolList,
+    } = this.state;
+    const formated_dob = moment(dob).format('YYYY-MM-DD');
+    const formated_time = moment(reminderTime).format('HH:mm:ss');
     const obj = {
       firstname_reader: firstName,
       lastname_reader: lastName,
@@ -74,42 +251,46 @@ export default class AddReader extends React.Component {
       mynewschool: school,
       dra: draLevel,
       gra: graLevel,
-      lexel: lexelLevel
-    }
+      lexel: lexelLevel,
+    };
     console.log(obj);
-    if(firstName === ''){
+    if (firstName === '') {
       this.setState({
         errorField: 'firstName',
-        activePage:0
-      })
-    }else if(lastName === ''){
+        activePage: 0,
+      });
+    } else if (lastName === '') {
       this.setState({
         errorField: 'lastName',
-        activePage:0
-      })
-    }else if(pincode.length != 6 || ((selectedSchool===0 || selectedSchool === schoolList.length-1) && schoolName.length<3)){
+        activePage: 0,
+      });
+    } else if (
+      pincode.length != 6 ||
+      ((selectedSchool === 0 || selectedSchool === schoolList.length - 1) &&
+        schoolName.length < 3)
+    ) {
       this.setState({
         errorField: 'pincode',
-        activePage:1
-      })
-    }else{
+        activePage: 1,
+      });
+    } else {
       console.log(' everythig perfect');
-      this.props.addNewReader(obj)
-      .then((response) => {
-        ToastAndroid.show(response, ToastAndroid.SHORT)
-        try {
-          this.deleteStateValues()
-        } catch (error) {
-          console.log('error:', error);
-        }
-      })
-      .catch((error) => {
-        console.log('add reader error',error);
-        ToastAndroid.show(error, ToastAndroid.SHORT)
-      })
+      this.props
+        .addNewReader(obj)
+        .then(response => {
+          Toast.show(response);
+          try {
+            this.deleteStateValues();
+          } catch (error) {
+            console.log('error:', error);
+          }
+        })
+        .catch(error => {
+          console.log('add reader error', error);
+          Toast.show(error);
+        });
       this.props.cancelAddReader(e);
     }
-
   };
   deleteStateValues = () => {
     this.setState({
@@ -126,45 +307,45 @@ export default class AddReader extends React.Component {
       draLevel: 1,
       graLevel: 1,
       lexelLevel: 25,
-    })
-  }
-  fetchSchoolsData = (data) => {
+    });
+  };
+  fetchSchoolsData = data => {
     const schoolUrl = fetchSchoolUrl + '/' + data;
     //API TO FETCH READERS
     axios
       .get(schoolUrl)
-      .then(res=>res.data)
+      .then(res => res.data)
       .then(response => {
         //UPDATE SCHOOLLIST WITH NEW ARRAY
-        var formatedArray = response
-        formatedArray.splice(0, 0, {name: 'Select school'})
-        formatedArray.splice(response.length, 0, {name: 'Add new school'})
+        var formatedArray = response;
+        formatedArray.splice(0, 0, {name: 'Select school'});
+        formatedArray.splice(response.length, 0, {name: 'Add new school'});
         // console.log('formated array = ', formatedArray);
         this.setState({
-          schoolList: formatedArray
-        })
+          schoolList: formatedArray,
+        });
       })
       .catch(error => {
         console.log('get school error =', error);
       });
-  }
+  };
   updateStateValue = (fieldName, value) => {
     // console.log('updating ', fieldName, ' val=', value);
     this.setState({
       [fieldName]: value,
     });
 
-    if(fieldName === 'pincode'){
-      if(value.length === 6){
+    if (fieldName === 'pincode') {
+      if (value.length === 6) {
         //FETCH SCHOOLS OF THIS PINCODE
         console.log('fetching schools of this pincode');
-        this.fetchSchoolsData(value)
+        this.fetchSchoolsData(value);
       }
     }
-    if(fieldName === 'selectedSchool'){
-      if(value != this.state.schoolList.length-1){
+    if (fieldName === 'selectedSchool') {
+      if (value != this.state.schoolList.length - 1) {
         //SELECTED OTHER ELEMENT THEN ADD NEW SCHOOL FROM LIST
-        this.setState({ schoolName: '' })
+        this.setState({schoolName: ''});
       }
     }
   };
@@ -183,8 +364,8 @@ export default class AddReader extends React.Component {
     });
   };
   render() {
-    const { openAddOverlay, cancelAddReader, addNewReader } = this.props;
-    const { activePage } = this.state;
+    const {openAddOverlay, cancelAddReader, addNewReader} = this.props;
+    const {activePage} = this.state;
     const styles = StyleSheet.create({
       overlayStyle: {
         width: '90%',
@@ -208,7 +389,7 @@ export default class AddReader extends React.Component {
       heading: {
         flex: 1,
         textAlign: 'center',
-        fontSize:22
+        fontSize: 22,
       },
     });
 
@@ -232,7 +413,7 @@ export default class AddReader extends React.Component {
 
     return (
       <Overlay
-        isVisible={openAddOverlay}//{true} //
+        isVisible={openAddOverlay} //{true} //
         overlayStyle={styles.overlayStyle}
         // fullScreen
         onBackdropPress={e => cancelAddReader(e)}>
@@ -253,13 +434,15 @@ export default class AddReader extends React.Component {
               onNext={() => this.setActivePage(activePage + 1)}
               onBack={() => this.setActivePage(activePage - 1)}
               onFinish={e => this.handleAddNewReader(e)}
-              buttonStyle={[{
-                marginLeft: 'auto',
-                width: 100,
-                alignItems: 'center',
-              }]}
-              wrapperStyle={{ width: '100%', height: '95%' }} //STYLE FROM CENTER CONTENT OF PAGE
-              stepTextStyle={[{ color: white }]}
+              buttonStyle={[
+                {
+                  marginLeft: 'auto',
+                  width: 100,
+                  alignItems: 'center',
+                },
+              ]}
+              wrapperStyle={{width: '100%', height: '95%'}} //STYLE FROM CENTER CONTENT OF PAGE
+              stepTextStyle={[{color: white}]}
             />
           </View>
         </View>
@@ -270,36 +453,40 @@ export default class AddReader extends React.Component {
 
 const StepperPage1 = props => {
   return (
-    <View style={{ marginTop: 40 }}>
+    <View style={{marginTop: 40}}>
       <Input
         label={
-          <View style={{ flexDirection: 'row' }}>
+          <View style={{flexDirection: 'row'}}>
             <Text style={globalStyle.font}>First Name</Text>
-            <Text style={{ color: red }}>{' *'}</Text>
+            <Text style={{color: red}}>{' *'}</Text>
           </View>
         }
         leftIcon={<Icon2 size={17} name="person" />}
         onChangeText={value => props.updateStateValue('firstName', value)}
         value={props.states.firstName}
-        errorMessage={props.states.errorField==='firstName' ? 'First Name Required !' : ''}
+        errorMessage={
+          props.states.errorField === 'firstName' ? 'First Name Required !' : ''
+        }
       />
 
       <Input
         label={
-          <View style={{ flexDirection: 'row' }}>
+          <View style={{flexDirection: 'row'}}>
             <Text style={globalStyle.font}>Last Name</Text>
-            <Text style={{ color: red }}>{' *'}</Text>
+            <Text style={{color: red}}>{' *'}</Text>
           </View>
         }
         leftIcon={<Icon2 size={17} name="person" />}
         onChangeText={value => props.updateStateValue('lastName', value)}
         value={props.states.lastName}
-        errorMessage={props.states.errorField==='lastName' ? 'Last Name Required !' : ''}
+        errorMessage={
+          props.states.errorField === 'lastName' ? 'Last Name Required !' : ''
+        }
       />
 
       <View style={stylesSteppers.headingContainer}>
         <Text style={globalStyle.font}>Gender</Text>
-        <Text style={{ color: red }}>{' *'}</Text>
+        <Text style={{color: red}}>{' *'}</Text>
       </View>
       <RadioButton.Group
         onValueChange={newValue => props.updateStateValue('gender', newValue)}
@@ -318,7 +505,7 @@ const StepperPage1 = props => {
 
       <View style={stylesSteppers.headingContainer}>
         <Text style={globalStyle.font}>DOB</Text>
-        <Text style={{ color: red }}>{' *'}</Text>
+        <Text style={{color: red}}>{' *'}</Text>
       </View>
       {!props.states.showDatePicker ? (
         <View style={stylesSteppers.dateTimeContainer}>
@@ -362,12 +549,12 @@ const StepperPage2 = props => {
     <View style={stylesSteppers.parentContainer}>
       <View style={stylesSteppers.headingContainer}>
         <Text style={globalStyle.font}>Grade</Text>
-        <Text style={{ color: red }}>{' *'}</Text>
+        <Text style={{color: red}}>{' *'}</Text>
       </View>
       <View style={stylesSteppers.dateTimeContainer}>
         <Picker
           selectedValue={props.states.grade}
-          style={[{ height: '100%', width: '100%' }]}
+          style={[{height: '100%', width: '100%'}]}
           mode="dropdown"
           onValueChange={(itemValue, itemIndex) =>
             props.updateStateValue('grade', itemValue)
@@ -378,23 +565,29 @@ const StepperPage2 = props => {
 
       <View style={stylesSteppers.headingContainer}>
         <Text style={globalStyle.font}>Select school details</Text>
-        <Text style={{ color: red }}>{' *'}</Text>
+        <Text style={{color: red}}>{' *'}</Text>
       </View>
-      <View style={{backgroundColor:secondaryLight, padding:5}}>
+      <View style={{backgroundColor: secondaryLight, padding: 5}}>
         <Input
-          placeholder='School pincode'
+          placeholder="School pincode"
           onChangeText={value => props.updateStateValue('pincode', value)}
           value={props.states.pincode}
-          keyboardType='number-pad'
+          keyboardType="number-pad"
           maxLength={6}
-          errorMessage={props.states.errorField==='pincode' ? 'Fill school details!' : ''}
+          errorMessage={
+            props.states.errorField === 'pincode' ? 'Fill school details!' : ''
+          }
         />
-        {props.states.pincode.length === 6 ?
-        <View>
-            <View style={[stylesSteppers.dateTimeContainer, {width:'95%', alignSelf:'center'}]}>
+        {props.states.pincode.length === 6 ? (
+          <View>
+            <View
+              style={[
+                stylesSteppers.dateTimeContainer,
+                {width: '95%', alignSelf: 'center'},
+              ]}>
               <Picker
                 selectedValue={props.states.selectedSchool}
-                style={[{ height: '100%', width: '100%' }]}
+                style={[{height: '100%', width: '100%'}]}
                 mode="dropdown"
                 onValueChange={(itemValue, itemIndex) =>
                   props.updateStateValue('selectedSchool', itemValue)
@@ -402,29 +595,31 @@ const StepperPage2 = props => {
                 {schoolItems}
               </Picker>
             </View>
-            {props.states.selectedSchool === props.states.schoolList.length-1 ? 
+            {props.states.selectedSchool ===
+            props.states.schoolList.length - 1 ? (
               <Input
-                placeholder='Add school name'
-                onChangeText={value => props.updateStateValue('schoolName', value)}
+                placeholder="Add school name"
+                onChangeText={value =>
+                  props.updateStateValue('schoolName', value)
+                }
                 value={props.states.schoolName}
                 // errorMessage={props.states.errorField==='pincode' ? 'Please !' : ''}
               />
-            :null}
-        </View>
-        :null}
+            ) : null}
+          </View>
+        ) : null}
       </View>
-
 
       <View style={stylesSteppers.headingContainer}>
         <Text style={globalStyle.font}>Reminder Time</Text>
-        <Text style={{ color: red }}>{' *'}</Text>
+        <Text style={{color: red}}>{' *'}</Text>
       </View>
-      <View >
-        <Text style={[globalStyle.font,{opacity:0.60}]}>
+      <View>
+        <Text style={[globalStyle.font, {opacity: 0.6}]}>
           Choose your daily reminder time to read books
         </Text>
       </View>
-      
+
       {!props.states.showTimePicker ? (
         <View>
           <View style={stylesSteppers.dateTimeContainer}>
@@ -448,10 +643,9 @@ const StepperPage2 = props => {
           mode="time"
           onChange={props.onChange}
           is24Hour={false} //SETTING THIS TRUE REMOVED AM/PM OPTION FROM PICKER
-        // dateFormat="day month year"//FORMAT ADJUST FROM MOMENT.JS
+          // dateFormat="day month year"//FORMAT ADJUST FROM MOMENT.JS
         />
       )}
-
     </View>
   );
 };
@@ -476,7 +670,7 @@ const StepperPage3 = props => {
       <View style={stylesSteppers.dateTimeContainer}>
         <Picker
           selectedValue={props.states.draLevel}
-          style={{ height: '100%', width: '100%' }}
+          style={{height: '100%', width: '100%'}}
           mode="dropdown"
           onValueChange={(itemValue, itemIndex) =>
             props.updateStateValue('draLevel', itemValue)
@@ -492,7 +686,7 @@ const StepperPage3 = props => {
       <View style={stylesSteppers.dateTimeContainer}>
         <Picker
           selectedValue={props.states.graLevel}
-          style={{ height: '100%', width: '100%' }}
+          style={{height: '100%', width: '100%'}}
           mode="dropdown"
           onValueChange={(itemValue, itemIndex) =>
             props.updateStateValue('graLevel', itemValue)
@@ -508,7 +702,7 @@ const StepperPage3 = props => {
       <View style={stylesSteppers.dateTimeContainer}>
         <Picker
           selectedValue={props.states.lexelLevel}
-          style={{ height: '100%', width: '100%' }}
+          style={{height: '100%', width: '100%'}}
           mode="dropdown"
           onValueChange={(itemValue, itemIndex) =>
             props.updateStateValue('lexelLevel', itemValue)
@@ -525,7 +719,7 @@ const stylesSteppers = StyleSheet.create({
     alignItems: 'center',
     marginHorizontal: 10,
   },
-  radioGrupParent: { flexDirection: 'row', flex: 1 },
+  radioGrupParent: {flexDirection: 'row', flex: 1},
   dateTimeContainer: {
     width: '100%',
     height: 60,
@@ -537,8 +731,8 @@ const stylesSteppers = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  dateTimeIcon: { margin: 5 },
-  dateTimeText: { flex: 1, textAlign: 'center', fontSize:17 },
-  parentContainer: { marginTop: 40 },
-  headingContainer: { flexDirection: 'row', marginTop: 15 },
+  dateTimeIcon: {margin: 5},
+  dateTimeText: {flex: 1, textAlign: 'center', fontSize: 17},
+  parentContainer: {marginTop: 40},
+  headingContainer: {flexDirection: 'row', marginTop: 15},
 });

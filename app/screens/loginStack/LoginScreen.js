@@ -15,10 +15,11 @@ import {
   GoogleSigninButton,
   statusCodes,
 } from '@react-native-google-signin/google-signin';
+import Toast from 'react-native-simple-toast';
 import {Context as AuthContext} from '../../hoc/AuthContext';
 import {darkGray, primary, white, secondary, lightGray} from '../../values/colors';
-import {ToastAndroid} from 'react-native';
 import {globalStyle} from '../../values/constants';
+import { ourWebClientId } from '../../values/config';
 
 export default function LoginScreen(props) {
   const [emailphone, setEmailPhone] = useState('8962607775');
@@ -33,9 +34,7 @@ export default function LoginScreen(props) {
 
   useEffect(() => {
     GoogleSignin.configure({
-      webClientId:
-        '994684385038-lua3v4tnr6dm2cnpvg5fc9dmrpqluvvp.apps.googleusercontent.com',
-      //994684385038-lua3v4tnr6dm2cnpvg5fc9dmrpqluvvp.apps.googleusercontent.com ID IS WORKING FOR DEBUG AND RELEASE APK WITH SHA1 -> 5E:8F:16:06:2E:A3:CD:2C:4A:0D:54:78:76:BA:A6:F3:8C:AB:F6:25
+      webClientId: ourWebClientId,
       offlineAccess: true,
     });
     isSignedIn();
@@ -89,9 +88,9 @@ export default function LoginScreen(props) {
       // .catch(error => {
       //   console.log('sign in error = ', error);
       //   if (error == 'Wrong Id Password') {
-      //     ToastAndroid.show('Incorrect Id/Password !', ToastAndroid.SHORT);
+      //     Toast.show('Incorrect Id/Password !');
       //   } else {
-      //     ToastAndroid.show('Some Error Occured!', ToastAndroid.SHORT);
+      //     Toast.show('Some Error Occured!');
       //   }
       //   setLoading(false);
       // });
@@ -126,9 +125,9 @@ export default function LoginScreen(props) {
         .catch(error => {
           console.log('sign in error = ', error);
           if (error == 'Wrong Id Password') {
-            ToastAndroid.show('Incorrect Id/Password !', ToastAndroid.SHORT);
+            Toast.show('Incorrect Id/Password !');
           } else {
-            ToastAndroid.show('Some Error Occured!', ToastAndroid.SHORT);
+            Toast.show('Some Error Occured!');
           }
           setLoading(false);
         });
