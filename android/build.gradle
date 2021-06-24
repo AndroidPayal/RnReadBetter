@@ -8,6 +8,8 @@ buildscript {
         targetSdkVersion = 29
         ndkVersion = "20.1.5948944"
         googlePlayServicesAuthVersion = "16.0.1" 
+        firebaseMessagingVersion = "21.1.0" // Add this is app/build.gradle
+
     }
     repositories {
         google()
