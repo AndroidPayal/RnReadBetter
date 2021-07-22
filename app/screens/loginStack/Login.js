@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Dimensions,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import CheckBox from '@react-native-community/checkbox';
 import {Text, Input} from 'react-native-elements';
@@ -17,7 +18,7 @@ import {
 } from '@react-native-google-signin/google-signin';
 
 import {Context as AuthContext} from '../../hoc/AuthContext';
-import {darkGray, primary, white, secondary, black} from '../../values/colors';
+import {darkGray, primary, white, secondary, black, mediumGray} from '../../values/colors';
 import {globalStyle} from '../../values/constants';
 import {ourWebClientId} from '../../values/config';
 
@@ -154,7 +155,7 @@ export default function Login(props) {
   const LoginView = () => {
     return (
       <View style={{flex: 3}}>
-        <View style={{flex: 1}}>
+        <View style={{flex: 1, justifyContent:'center'}}>
           <Image
             source={require('../../assets/read_better.png')}
             style={styles.logoImage}
@@ -214,7 +215,7 @@ export default function Login(props) {
                   value={flagRememberMe}
                   onValueChange={newValue => setRememberMe(newValue)}
                 />
-                <View style={{justifyContent: 'center'}}>
+                <View style={{justifyContent: 'center', marginLeft:3}}>
                   <Text
                     style={[
                       {fontSize: 15, opacity: 0.5},
@@ -224,12 +225,13 @@ export default function Login(props) {
                   </Text>
                 </View>
               </View>
-              <View
+              <TouchableOpacity
                 style={{
                   flex: 1,
                   alignItems: 'flex-end',
                   justifyContent: 'center',
-                }}>
+                }}
+                onPress={() => {Linking.openURL('https://thereadbettercompany.com/user/forgot/password')}}>
                 <Text
                   style={[
                     {fontSize: 15, opacity: 0.5},
@@ -237,7 +239,7 @@ export default function Login(props) {
                   ]}>
                   Forgot password?
                 </Text>
-              </View>
+              </TouchableOpacity>
             </View>
           </View>
           <View style={{flex: 1, justifyContent: 'center'}}>
@@ -294,9 +296,9 @@ export default function Login(props) {
           style={[styleBackground.bottomCircle]}
         />
       </View>
-      <View style={{position:'absolute', right: 2, bottom: 2}}>
-          <Text style={[{color: secondary}, globalStyle.font]}>
-            v 21.06.22
+      <View style={{position:'absolute', right: 4, bottom: 2}}>
+          <Text style={[{color: mediumGray, fontSize:10}, globalStyle.font]}>
+            v 21.07.02
           </Text>
       </View>
       {LoginView()}
@@ -324,8 +326,9 @@ const styles = StyleSheet.create({
     height: 70,
     width: '100%',
     resizeMode: 'contain',
-    marginTop: 36,
-    marginBottom: 10,
+    alignSelf:'center',
+    // marginTop: 50,//36
+    // marginBottom: 10,
   },
   inputView: {
     flexDirection: 'row',
@@ -345,6 +348,10 @@ const styleFooter = StyleSheet.create({
     height: 50,
     backgroundColor: white,
     elevation: 4,
+    shadowColor: mediumGray,
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.2,
+    // elevation: 4,
     justifyContent: 'center',
   },
   googleImage: {width: 40, height: 40, alignSelf: 'center'},

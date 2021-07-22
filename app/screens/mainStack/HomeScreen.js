@@ -47,6 +47,7 @@ function HomeScreen({navigation}) {
 
   const encodedUserId = base64.encode(state.id.toString());
   const [readers, setReaders] = useState(state1.allReaders);
+  console.log('readers in home =', state1.allReaders);
   // const [flagNewReader, setFlagNewReader] = useState(false);
   const [userCredit, setUserCredit] = useState(0);
   const [isLoading, setLoading] = useState(false);

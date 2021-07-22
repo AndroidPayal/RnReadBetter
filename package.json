@@ -1,6 +1,6 @@
 {
   "name": "RnReadBetter",
-  "version": "21.06.22",
+  "version": "21.07.02",
   "private": true,
   "scripts": {
     "android": "react-native run-android",

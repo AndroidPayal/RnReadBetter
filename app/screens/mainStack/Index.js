@@ -32,6 +32,7 @@ export default function Index({navigation}) {
   const {value, signout} = useContext(AuthContext);
   const {state1, fetchAllReaders} = useContext(UserContext);
   const [readers, setReaders] = useState([]);
+  const [flagReadersFetched, setFlagReadersFetched]  = useState(false)
   const encodedUserId = base64.encode(
     value.state.id ? value.state.id.toString() : '',
   );
@@ -84,6 +85,7 @@ export default function Index({navigation}) {
         fetchReaderDetail(value.state?.id)
           .then(res => {
             setReaders(res);
+            setFlagReadersFetched(true)
             console.log('routing user to home screen with reader data =', res);
           })
           .catch(error => console.log(error));
@@ -92,7 +94,8 @@ export default function Index({navigation}) {
       fetchAllReaders({userid: value.state.id})
         .then(res => {
           setReaders(res);
-          console.log('sending user to homw screen with readers');
+          setFlagReadersFetched(true)
+          console.log('sending user to homw screen with readers=', res);
         })
         .catch(error => {
           console.log('error feching readers = ', error);
@@ -127,7 +130,7 @@ export default function Index({navigation}) {
   }, [readers]);
 
   return value.state?.id && value.state?.name ? (
-    readers.length === 0 ? (
+    !flagReadersFetched ? (
       <ActivityIndicator
         style={{
           flex: 1,

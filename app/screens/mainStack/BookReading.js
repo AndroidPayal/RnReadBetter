@@ -9,6 +9,7 @@ import {
   ScrollView,
 } from 'react-native';
 import Toast from 'react-native-simple-toast';
+import {Picker} from '@react-native-picker/picker';
 import {
   Text,
   BottomSheet,
@@ -43,6 +44,7 @@ import {
   getUserCredit,
   stopBookReadingUrl,
   voteApi,
+  humanVoteApi,
 } from '../../values/config';
 import {Context as AuthContext} from '../../hoc/AuthContext';
 import {globalStyle, globalTitleBar} from '../../values/constants';
@@ -75,6 +77,12 @@ export default function BookReading({route, navigation}) {
   const [stopReadingType, setStopReadingType] = useState('stop');
   const [isOverlayActionLoading, setOverlayActionLoading] = useState(false);
   const [likeDislikeStatus, setlikeDislikeStatus] = useState(null);
+  const [humanVoteOptions, setHumanVoteOptions] = useState([
+    { name:'Male', value:1 },
+    { name:'Female', value:2 },
+    { name:'Both', value: 0 },
+  ])
+  const [selectedHumanVote, setSelectedHumanVote] = useState({ name:'Male', value:1 })
 
   function setTitleBar() {
     navigation.setOptions(
@@ -363,6 +371,11 @@ export default function BookReading({route, navigation}) {
     setFunFactor(rating);
   }
   const headerBookBox = () => {
+    let humanVotePickerItems = humanVoteOptions.map((s, i) => {
+      return (
+        <Picker.Item key={i} value={s} label={s.name} />
+      );
+    });
     return (
       <View style={{flexDirection: 'row'}}>
         <View style={styles.bookImageParent}>
@@ -425,16 +438,63 @@ export default function BookReading({route, navigation}) {
                 />
               </TouchableOpacity>
 
-              <TouchableOpacity
-                style={{flex: 1, alignItems: 'center'}}
-                onPress={() => handleHumanVotes()}>
-                <Icon1 name="human-male-male" size={24}></Icon1>
-              </TouchableOpacity>
+              <View style={{
+                  backgroundColor: tintBackground,
+                  flex:1,
+              }}>
+                <Icon1 name="human-male-male"
+                  size={24}
+                  style={{
+                    color: black,
+                    position: "absolute",
+                    top: 0,
+                    left: 5,
+                    // fontSize: 20
+                }}
+                />
+                <Picker
+                  mode="dropdown"
+                  style={{
+                    height: 30,
+                    backgroundColor: "transparent",
+                }}
+                  placeholder="Select your SIM"
+                  placeholderStyle={{ color: '#E2E2E2' }}
+                  placeholderIconColor={'#E2E2E2'}
+                  selectedValue={selectedHumanVote}
+                  onValueChange={(itemValue, itemIndex) => handleHumanVotes(itemValue)}
+                >
+                  {humanVotePickerItems}
+                </Picker>
+              </View>
             </View>
           </View>
         </View>
       </View>
     );
+  };
+  const handleHumanVotes = (itemValue) => {
+    console.log('changing selected human vote to =', itemValue);
+    setSelectedHumanVote(itemValue)
+
+    const obj = {
+      book_id: currentBook.id,
+      _token: state.token,
+      type: itemValue.value,
+    };
+    //API TO send vote
+    axios
+      .post(humanVoteApi, obj)
+      .then(res => res.data)
+      .then(response => {
+        console.log('res = ', response);
+        Toast.show('Thank you for response')
+      })
+      .catch(error => {
+        setlikeDislikeStatus(null);
+        console.log('error handling votes =', error);
+        Toast.show('Server Error!');
+      });
   };
   const handleVotes = voteType => {
     if (voteType === 0) {

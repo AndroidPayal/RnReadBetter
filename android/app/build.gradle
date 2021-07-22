@@ -134,8 +134,8 @@ android {
         applicationId "com.rnreadbetter"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 11
-        versionName "21.06.22"
+        versionCode 12
+        versionName "21.07.02"
     }
     splits {
         abi {
